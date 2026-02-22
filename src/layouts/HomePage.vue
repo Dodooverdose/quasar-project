@@ -6,7 +6,8 @@
           Sanعa
           <img src="/icons/0.png" alt="San3a" style="height: 40px; margin-left: 10px" />
         </q-toolbar-title>
-        <q-space /> <q-btn flat round dense icon="account_circle" />
+        <q-space />
+        <q-btn flat round dense icon="account_circle" to="/profile" aria-label="User profile" />
       </q-toolbar>
     </q-header>
     <q-page-container>
@@ -19,6 +20,43 @@
             <div class="label">{{ item.label }}</div>
           </div>
         </div>
+        <div class="footer-section">
+          <div class="social-icons">
+            <div class="icon-buttons">
+              <q-btn
+                flat
+                round
+                dense
+                icon="facebook"
+                size="md"
+                style="color: #1877f2"
+                href="#"
+                target="_blank"
+              />
+              <q-btn
+                flat
+                round
+                dense
+                icon="twitter"
+                size="md"
+                style="color: #1da1f2"
+                href="#"
+                target="_blank"
+              />
+              <q-btn
+                flat
+                round
+                dense
+                icon="instagram"
+                size="md"
+                style="color: #e4405f"
+                href="#"
+                target="_blank"
+              />
+            </div>
+            <div class="copyright-text">© 2024 Sanعa. All rights reserved.</div>
+          </div>
+        </div>
       </q-page>
     </q-page-container>
   </q-layout>
@@ -28,15 +66,12 @@
 import { ref } from 'vue'
 
 const items = ref([
-  { label: 'Profile', icon: '/icons/0.png' },
-  { label: 'Requests', icon: '/icons/0.png' },
-  { label: 'Messages', icon: '/icons/0.png' },
-  { label: 'Bookings', icon: '/icons/0.png' },
-  { label: 'Payments', icon: '/icons/0.png' },
-  { label: 'Settings', icon: '/icons/0.png' },
-  { label: 'Support', icon: '/icons/0.png' },
-  { label: 'Reviews', icon: '/icons/0.png' },
-  { label: 'More', icon: '/icons/0.png' },
+  { label: 'Plumbing', icon: '/icons/0.png' },
+  { label: 'Carpentery', icon: '/icons/0.png' },
+  { label: 'Electrical', icon: '/icons/0.png' },
+  { label: 'Kitchen Utilities', icon: '/icons/0.png' },
+  { label: 'Painters and Decorators', icon: '/icons/0.png' },
+  { label: 'Drapery Seamstress', icon: '/icons/0.png' },
 ])
 </script>
 
@@ -46,7 +81,9 @@ const items = ref([
   max-width: 960px;
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 20px;
+  gap: 24px;
+  justify-items: center;
+  margin-top: 100px;
 }
 
 .grid-item {
@@ -74,6 +111,43 @@ const items = ref([
 .label {
   margin-top: 10px;
   font-size: 14px;
+  text-align: center;
+}
+
+.footer-section {
+  width: 100%;
+  max-width: 960px;
+  background: #fff;
+  border-radius: 12px;
+  padding: 24px;
+  margin-top: 150px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  border: 2px solid #4caf50;
+}
+
+.social-icons {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  background: #fff;
+  border-radius: 8px;
+  padding: 16px;
+}
+
+.icon-buttons {
+  display: flex;
+  gap: 32px;
+  justify-content: center;
+  padding: 8px 16px;
+}
+
+.copyright-text {
+  font-size: 12px;
+  color: #888;
   text-align: center;
 }
 </style>

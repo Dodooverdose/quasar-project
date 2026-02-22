@@ -15,6 +15,10 @@ const routes = [
     path: '/home',
     component: () => import('layouts/HomePage.vue'),
   },
+  {
+    path: '/profile',
+    component: () => import('layouts/UserProfile.vue'),
+  },
 
   // Always leave this as last one,
   // but you can also remove it
