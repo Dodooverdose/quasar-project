@@ -2,15 +2,13 @@
   <q-page class="flex flex-center">
     <div class="q-pa-lg" style="max-width: 500px; width: 100%">
       <q-card>
-        <q-card-section class="text-h6 text-center q-pb-none">
-          Create Account
-        </q-card-section>
+        <q-card-section class="text-h6 text-center q-pb-none"> Create Account </q-card-section>
 
         <q-card-section>
           <q-form @submit="onSubmit" class="q-gutter-md">
             <q-input
               v-model="form.fullName"
-              label="Full Name"
+              label="Full Not Name"
               type="text"
               filled
               outlined
@@ -44,10 +42,7 @@
               rules="[val => val === form.password || 'Passwords must match']"
             />
 
-            <q-checkbox
-              v-model="form.agreeTerms"
-              label="I agree to the terms and conditions"
-            />
+            <q-checkbox v-model="form.agreeTerms" label="I agree to the terms and conditions" />
 
             <q-btn
               unelevated
@@ -61,12 +56,7 @@
 
           <div class="text-center q-mt-md">
             <span>Already have an account? </span>
-            <q-btn
-              flat
-              color="primary"
-              label="Sign In"
-              to="/"
-            />
+            <q-btn flat color="primary" label="Sign In" to="/" />
           </div>
         </q-card-section>
       </q-card>
