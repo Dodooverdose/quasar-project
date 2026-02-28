@@ -5,7 +5,7 @@
         <q-btn flat round dense icon="arrow_back" @click="goBack" />
         <q-toolbar-title style="display: flex; align-items: center">
           Sanعa
-          <img src="/icons/0.png" alt="San3a" style="height: 40px; margin-left: 10px" />
+          <img src="/icons/White.png" alt="San3a" style="height: 40px; margin-left: 10px" />
         </q-toolbar-title>
       </q-toolbar>
     </q-header>
@@ -66,6 +66,18 @@
                   />
                 </div>
 
+                <q-select
+                  v-if="form.role === 'fixer'"
+                  v-model="form.specialty"
+                  label="Select Specialty"
+                  filled
+                  outlined
+                  :options="specialtyOptions"
+                  emit-value
+                  map-options
+                  :rules="[(val) => !!val || 'Please select a specialty']"
+                />
+
                 <q-checkbox v-model="form.agreeTerms" label="I agree to the terms and conditions" />
 
                 <q-btn
@@ -111,12 +123,22 @@ const goToHome = () => {
   router.push('/home')
 }
 
+const specialtyOptions = [
+  { label: 'Plumber', value: 'plumber' },
+  { label: 'Electrician', value: 'electrician' },
+  { label: 'Carpenter', value: 'carpenter' },
+  { label: 'Painter', value: 'painter' },
+  { label: 'Kitchen Fitter', value: 'kitchen_fitter' },
+  { label: 'Drapery Seamstress', value: 'drapery_seamstress' },
+]
+
 const form = ref({
   fullName: '',
   email: '',
   password: '',
   confirmPassword: '',
   role: '',
+  specialty: null,
   agreeTerms: false,
 })
 
@@ -162,6 +184,14 @@ const onSubmit = async () => {
     return
   }
 
+  if (form.value.role === 'fixer' && !form.value.specialty) {
+    $q.notify({
+      type: 'negative',
+      message: 'Please select a specialty',
+    })
+    return
+  }
+
   if (!form.value.agreeTerms) {
     $q.notify({
       type: 'negative',
@@ -186,6 +216,7 @@ const onSubmit = async () => {
     password: '',
     confirmPassword: '',
     role: '',
+    specialty: null,
     agreeTerms: false,
   }
 }

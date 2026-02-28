@@ -5,7 +5,7 @@
         <q-btn flat round dense icon="arrow_back" @click="goBack" />
         <q-toolbar-title style="display: flex; align-items: center">
           Sanعa
-          <img src="/icons/0.png" alt="San3a" style="height: 40px; margin-left: 10px" />
+          <img src="/icons/White.png" alt="San3a" style="height: 40px; margin-left: 10px" />
         </q-toolbar-title>
       </q-toolbar>
     </q-header>
@@ -49,13 +49,28 @@
                 />
               </q-form>
 
-              <div class="text-center q-mt-md">
-                <span>Don't have an account? </span>
-                <q-btn flat color="primary" label="Sign Up" @click="goToSignUp" />
+              <div
+                class="text-center q-mt-md"
+                style="display: flex; align-items: center; justify-content: center"
+              >
+                <span>Don't have an account?</span>
+                <q-btn
+                  flat
+                  dense
+                  color="primary"
+                  label="Sign Up"
+                  @click="goToSignUp"
+                  class="q-ml-xs"
+                />
               </div>
 
               <div class="text-center q-mt-md">
-                <q-btn flat color="primary" label="Forgot Password?" />
+                <q-btn
+                  flat
+                  color="primary"
+                  label="Forgot Password?"
+                  style="margin: 0 auto !important"
+                />
               </div>
             </q-card-section>
           </q-card>
@@ -137,6 +152,6 @@ const onSubmit = async () => {
 .q-btn {
   margin: 0 auto !important;
   display: block !important;
-  margin-right: 20px !important;
+  margin-right: 15px !important;
 }
 </style>

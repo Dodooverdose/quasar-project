@@ -100,6 +100,7 @@ const goToSignIn = () => {
 
 .buttons-container {
   margin-top: 40px;
+  margin-left: -15px;
 }
 
 .loading-dots {

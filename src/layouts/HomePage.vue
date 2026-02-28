@@ -4,7 +4,7 @@
       <q-toolbar>
         <q-toolbar-title style="display: flex; align-items: center">
           Sanعa
-          <img src="/icons/0.png" alt="San3a" style="height: 40px; margin-left: 10px" />
+          <img src="/icons/White.png" alt="San3a" style="height: 40px; margin-left: 10px" />
         </q-toolbar-title>
         <q-space />
         <q-btn flat round dense icon="account_circle" to="/profile" aria-label="User profile" />
@@ -13,49 +13,31 @@
     <q-page-container>
       <q-page class="flex flex-center">
         <div class="home-grid q-pa-md">
-          <div v-for="(item, idx) in items" :key="idx" class="grid-item">
+          <div
+            v-for="(item, idx) in items"
+            :key="idx"
+            class="grid-item"
+            @click="goToPage(item.route)"
+          >
             <div class="icon-box">
               <img :src="item.icon" alt="icon" />
             </div>
             <div class="label">{{ item.label }}</div>
           </div>
         </div>
-        <div class="footer-section">
-          <div class="social-icons">
-            <div class="icon-buttons">
-              <q-btn
-                flat
-                round
-                dense
-                icon="facebook"
-                size="md"
-                style="color: #1877f2"
-                href="#"
-                target="_blank"
-              />
-              <q-btn
-                flat
-                round
-                dense
-                icon="twitter"
-                size="md"
-                style="color: #1da1f2"
-                href="#"
-                target="_blank"
-              />
-              <q-btn
-                flat
-                round
-                dense
-                icon="instagram"
-                size="md"
-                style="color: #e4405f"
-                href="#"
-                target="_blank"
-              />
-            </div>
-            <div class="copyright-text">© 2024 Sanعa. All rights reserved.</div>
+        <div class="footer-area">
+          <div class="icon-buttons">
+            <a href="#" target="_blank">
+              <img src="/icons/facebook.png" alt="Facebook" class="social-img" />
+            </a>
+            <a href="#" target="_blank">
+              <img src="/icons/x.png" alt="X" class="social-img" />
+            </a>
+            <a href="#" target="_blank">
+              <img src="/icons/instagram.png" alt="Instagram" class="social-img" />
+            </a>
           </div>
+          <div class="copyright-text">© 2024 Sanعa. All rights reserved.</div>
         </div>
       </q-page>
     </q-page-container>
@@ -64,14 +46,21 @@
 
 <script setup>
 import { ref } from 'vue'
+import { useRouter } from 'vue-router'
+
+const router = useRouter()
+
+const goToPage = (route) => {
+  if (route) router.push(route)
+}
 
 const items = ref([
-  { label: 'Plumbing', icon: '/icons/0.png' },
-  { label: 'Carpentery', icon: '/icons/0.png' },
-  { label: 'Electrical', icon: '/icons/0.png' },
-  { label: 'Kitchen Utilities', icon: '/icons/0.png' },
-  { label: 'Painters and Decorators', icon: '/icons/0.png' },
-  { label: 'Drapery Seamstress', icon: '/icons/0.png' },
+  { label: 'Plumbing', icon: '/icons/plumbing.png', route: '/plumbing' },
+  { label: 'Carpentery', icon: '/icons/carpentry.png', route: '/carpentry' },
+  { label: 'Electrical', icon: '/icons/electrical.png', route: '/electrical' },
+  { label: 'Kitchen Utilities', icon: '/icons/kitchen.png', route: '/kitchen' },
+  { label: 'Painters and Decorators', icon: '/icons/painters.png', route: '/painters' },
+  { label: 'Drapery Seamstress', icon: '/icons/drapery.png', route: '/drapery' },
 ])
 </script>
 
@@ -91,6 +80,7 @@ const items = ref([
   flex-direction: column;
   align-items: center;
   justify-content: flex-start;
+  cursor: pointer;
 }
 
 .icon-box {
@@ -114,35 +104,35 @@ const items = ref([
   text-align: center;
 }
 
-.footer-section {
+.footer-area {
   width: 100%;
   max-width: 960px;
-  background: #fff;
-  border-radius: 12px;
-  padding: 24px;
-  margin-top: 150px;
+  margin-top: 60px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 16px;
-  border: 2px solid #4caf50;
-}
-
-.social-icons {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  background: #fff;
-  border-radius: 8px;
-  padding: 16px;
+  gap: 12px;
 }
 
 .icon-buttons {
   display: flex;
-  gap: 32px;
   justify-content: center;
-  padding: 8px 16px;
+  align-items: center;
+  gap: 32px;
+  padding: 8px 0;
+}
+
+.social-img {
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
+  transition:
+    transform 0.2s ease,
+    filter 0.5s ease;
+}
+
+.social-img:hover {
+  transform: scale(1.15);
 }
 
 .copyright-text {
