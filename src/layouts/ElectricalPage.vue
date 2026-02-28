@@ -74,6 +74,20 @@
             </q-input>
           </div>
 
+          <div class="urgency-row q-mb-md">
+            <q-select
+              v-model="urgency"
+              :options="urgencyOptions"
+              label="Urgency"
+              filled
+              outlined
+              emit-value
+              map-options
+              style="flex: 1"
+            />
+            <q-icon name="warning" color="grey-6" size="sm" class="q-ml-sm" />
+          </div>
+
           <div class="attachments-row q-mb-md">
             <q-btn flat round icon="add_a_photo" color="primary" size="md" @click="openImagePicker">
               <q-tooltip>Attach Photos</q-tooltip>
@@ -144,6 +158,11 @@ const selectedImages = ref([])
 const location = ref(null)
 const appointmentDate = ref(null)
 const appointmentTime = ref(null)
+const urgency = ref('standard')
+const urgencyOptions = [
+  { label: 'Standard', value: 'standard' },
+  { label: 'Urgent', value: 'urgent' },
+]
 
 const goBack = () => {
   router.push('/home')
@@ -198,6 +217,7 @@ const submitRequest = () => {
   location.value = null
   appointmentDate.value = null
   appointmentTime.value = null
+  urgency.value = 'standard'
 }
 
 onBeforeUnmount(() => {
@@ -225,6 +245,11 @@ onBeforeUnmount(() => {
 .date-time-row .date-input,
 .date-time-row .time-input {
   flex: 1;
+}
+
+.urgency-row {
+  display: flex;
+  align-items: center;
 }
 
 .attachments-row {

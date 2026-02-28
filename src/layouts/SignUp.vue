@@ -91,9 +91,20 @@
                 />
               </q-form>
 
-              <div class="text-center q-mt-md">
-                <span>Already have an account? </span>
-                <q-btn flat color="primary" label="Sign In" @click="goToSignIn" />
+              <div
+                class="text-center q-mt-md"
+                style="display: flex; align-items: center; justify-content: center"
+              >
+                <span>Already have an account?</span>
+                <q-btn
+                  flat
+                  dense
+                  no-caps
+                  color="primary"
+                  label="Sign In"
+                  @click="goToSignIn"
+                  class="q-ml-xs"
+                />
               </div>
             </q-card-section>
           </q-card>
