@@ -17,14 +17,16 @@
             <q-card-section class="text-h6 text-center q-pb-none"> Sign In </q-card-section>
 
             <q-card-section>
-              <q-form @submit.prevent="onSubmit" class="q-gutter-md">
+              <q-form @submit.prevent="onSubmit" class="q-gutter-y-md">
                 <q-input
-                  v-model="form.email"
-                  label="Email"
-                  type="email"
+                  v-model="form.identifier"
+                  label="Email or Phone Number"
                   filled
                   outlined
-                  rules="[val => val && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val) || 'Valid email required']"
+                  hide-bottom-space
+                  :rules="[
+                    (val) => (val && val.trim().length > 0) || 'Email or phone number is required',
+                  ]"
                 />
 
                 <q-input
@@ -33,19 +35,23 @@
                   type="password"
                   filled
                   outlined
-                  rules="[val => val && val.length >= 6 || 'Password must be at least 6 characters']"
+                  hide-bottom-space
+                  :rules="[
+                    (val) => (val && val.length >= 6) || 'Password must be at least 6 characters',
+                  ]"
                 />
 
                 <q-checkbox v-model="form.rememberMe" label="Remember me" />
 
                 <q-btn
                   unelevated
-                  type="submit"
                   color="primary"
                   label="Sign In"
                   size="lg"
                   class="full-width"
-                  @click="goToHome"
+                  :disable="!isSignInEnabled"
+                  :loading="loading"
+                  @click="onSubmit"
                 />
               </q-form>
 
@@ -81,9 +87,10 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useQuasar } from 'quasar'
+import { supabase } from 'src/boot/supabase'
 
 const router = useRouter()
 const $q = useQuasar()
@@ -96,51 +103,99 @@ const goBack = () => {
   router.push('/signup')
 }
 
-const goToHome = () => {
-  router.push('/home')
-}
-
 const form = ref({
-  email: '',
+  identifier: '',
   password: '',
   rememberMe: false,
 })
 
+const loading = ref(false)
+
+const isSignInEnabled = computed(() => {
+  const f = form.value
+  return f.identifier.trim().length > 0 && f.password.length > 0
+})
+
+const isEmail = (val) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val)
+
+const lookupEmailByPhone = async (phone) => {
+  // Try users table first
+  let { data } = await supabase
+    .from('users')
+    .select('email')
+    .eq('phone_number', phone)
+    .limit(1)
+    .single()
+
+  if (data?.email)
+    return data.email
+
+    // Then try technician table
+  ;({ data } = await supabase
+    .from('technician')
+    .select('email')
+    .eq('phone_number', phone)
+    .limit(1)
+    .single())
+
+  return data?.email || null
+}
+
 const onSubmit = async () => {
-  // Validate form
-  if (!form.value.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.value.email)) {
-    $q.notify({
-      type: 'negative',
-      message: 'Invalid email information',
-    })
+  const identifier = form.value.identifier.trim()
+
+  if (!identifier) {
+    $q.notify({ type: 'negative', message: 'Please enter your email or phone number' })
     return
   }
 
   if (!form.value.password || form.value.password.length < 6) {
-    $q.notify({
-      type: 'negative',
-      message: 'Invalid password information',
-    })
+    $q.notify({ type: 'negative', message: 'Password must be at least 6 characters' })
     return
   }
 
-  // Sign in successful - navigate to home
-  $q.notify({
-    type: 'positive',
-    message: 'Sign in successful! Welcome back.',
-  })
+  loading.value = true
 
-  // Reset form
-  form.value = {
-    email: '',
-    password: '',
-    rememberMe: false,
+  try {
+    let email = identifier
+
+    // If it's not an email, treat it as a phone number and look up the email
+    if (!isEmail(identifier)) {
+      email = await lookupEmailByPhone(identifier)
+      if (!email) {
+        $q.notify({ type: 'negative', message: 'No account found with that phone number' })
+        return
+      }
+    }
+
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password: form.value.password,
+    })
+
+    if (error) {
+      $q.notify({ type: 'negative', message: error.message })
+      return
+    }
+
+    $q.notify({
+      type: 'positive',
+      message: 'Sign in successful! Welcome back.',
+    })
+
+    form.value = {
+      identifier: '',
+      password: '',
+      rememberMe: false,
+    }
+
+    router.push('/home')
+  } catch (err) {
+    $q.notify({ type: 'negative', message: 'An unexpected error occurred. Please try again.' })
+    console.error(err)
+  } finally {
+    loading.value = false
   }
-
-  // Navigate to home page
-  console.log('Sign in successful — navigating to /home')
-  await new Promise((r) => setTimeout(r, 250))
-  router.push('/home')
 }
 </script>
 

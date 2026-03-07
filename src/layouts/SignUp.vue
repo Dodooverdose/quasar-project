@@ -16,14 +16,15 @@
             <q-card-section class="text-h6 text-center q-pb-none"> Create Account </q-card-section>
 
             <q-card-section>
-              <q-form @submit.prevent="onSubmit" class="q-gutter-md">
+              <q-form @submit.prevent="onSubmit" class="q-gutter-y-md">
                 <q-input
                   v-model="form.fullName"
                   label="Full Name"
                   type="text"
                   filled
                   outlined
-                  rules="[val => val && val.length > 0 || 'Name is required']"
+                  hide-bottom-space
+                  :rules="[(val) => (val && val.length > 0) || 'Name is required']"
                 />
 
                 <q-input
@@ -32,7 +33,21 @@
                   type="email"
                   filled
                   outlined
-                  rules="[val => val && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val) || 'Valid email required']"
+                  hide-bottom-space
+                  :rules="[
+                    (val) =>
+                      (val && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val)) || 'Valid email required',
+                  ]"
+                />
+
+                <q-input
+                  v-model="form.phoneNumber"
+                  label="Phone Number"
+                  type="tel"
+                  filled
+                  outlined
+                  hide-bottom-space
+                  :rules="[(val) => (val && val.length > 0) || 'Phone number is required']"
                 />
 
                 <q-input
@@ -41,7 +56,10 @@
                   type="password"
                   filled
                   outlined
-                  rules="[val => val && val.length >= 6 || 'Password must be at least 6 characters']"
+                  hide-bottom-space
+                  :rules="[
+                    (val) => (val && val.length >= 6) || 'Password must be at least 6 characters',
+                  ]"
                 />
 
                 <q-input
@@ -50,11 +68,12 @@
                   type="password"
                   filled
                   outlined
-                  rules="[val => val === form.password || 'Passwords must match']"
+                  hide-bottom-space
+                  :rules="[(val) => val === form.password || 'Passwords must match']"
                 />
 
-                <div class="q-mt-md">
-                  <div class="text-subtitle2 q-mb-md">Select Role</div>
+                <div>
+                  <div class="text-subtitle2 q-mb-sm">Select Role</div>
                   <q-option-group
                     v-model="form.role"
                     :options="[
@@ -75,19 +94,41 @@
                   :options="specialtyOptions"
                   emit-value
                   map-options
+                  hide-bottom-space
                   :rules="[(val) => !!val || 'Please select a specialty']"
+                />
+
+                <q-input
+                  v-if="form.role === 'fixer'"
+                  v-model.number="form.yearsOfExperience"
+                  label="Years of Experience"
+                  type="number"
+                  filled
+                  outlined
+                  min="0"
+                  step="1"
+                  hide-bottom-space
+                  :rules="[
+                    (val) =>
+                      (val !== null &&
+                        val !== '' &&
+                        Number.isInteger(Number(val)) &&
+                        Number(val) >= 0) ||
+                      'Enter a valid number',
+                  ]"
                 />
 
                 <q-checkbox v-model="form.agreeTerms" label="I agree to the terms and conditions" />
 
                 <q-btn
                   unelevated
-                  type="submit"
                   color="primary"
                   label="Sign Up"
                   size="lg"
                   class="full-width"
-                  @click="goToHome"
+                  :disable="!isSignUpEnabled"
+                  :loading="loading"
+                  @click="onSubmit"
                 />
               </q-form>
 
@@ -115,9 +156,10 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useQuasar } from 'quasar'
+import { supabase } from 'src/boot/supabase'
 
 const router = useRouter()
 const $q = useQuasar()
@@ -128,10 +170,6 @@ const goBack = () => {
 
 const goToSignIn = () => {
   router.push('/signin')
-}
-
-const goToHome = () => {
-  router.push('/home')
 }
 
 const specialtyOptions = [
@@ -146,89 +184,144 @@ const specialtyOptions = [
 const form = ref({
   fullName: '',
   email: '',
+  phoneNumber: '',
   password: '',
   confirmPassword: '',
   role: '',
   specialty: null,
+  yearsOfExperience: null,
   agreeTerms: false,
+})
+
+const loading = ref(false)
+
+const isSignUpEnabled = computed(() => {
+  const f = form.value
+  return (
+    f.fullName.trim().length > 0 &&
+    f.email.trim().length > 0 &&
+    f.phoneNumber.trim().length > 0 &&
+    f.password.length > 0 &&
+    f.confirmPassword.length > 0 &&
+    !!f.role &&
+    (f.role !== 'fixer' || !!f.specialty) &&
+    (f.role !== 'fixer' ||
+      (f.yearsOfExperience !== null &&
+        f.yearsOfExperience !== '' &&
+        Number.isInteger(Number(f.yearsOfExperience)) &&
+        Number(f.yearsOfExperience) >= 0)) &&
+    f.agreeTerms
+  )
 })
 
 const onSubmit = async () => {
   // Validate form
   if (!form.value.fullName || form.value.fullName.length === 0) {
-    $q.notify({
-      type: 'negative',
-      message: 'Full name is required',
-    })
+    $q.notify({ type: 'negative', message: 'Full name is required' })
     return
   }
 
   if (!form.value.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.value.email)) {
-    $q.notify({
-      type: 'negative',
-      message: 'Valid email is required',
-    })
+    $q.notify({ type: 'negative', message: 'Valid email is required' })
     return
   }
 
   if (!form.value.password || form.value.password.length < 6) {
-    $q.notify({
-      type: 'negative',
-      message: 'Password must be at least 6 characters',
-    })
+    $q.notify({ type: 'negative', message: 'Password must be at least 6 characters' })
     return
   }
 
   if (form.value.password !== form.value.confirmPassword) {
-    $q.notify({
-      type: 'negative',
-      message: 'Passwords must match',
-    })
+    $q.notify({ type: 'negative', message: 'Passwords must match' })
     return
   }
 
   if (!form.value.role) {
-    $q.notify({
-      type: 'negative',
-      message: 'Please select a role',
-    })
+    $q.notify({ type: 'negative', message: 'Please select a role' })
     return
   }
 
   if (form.value.role === 'fixer' && !form.value.specialty) {
-    $q.notify({
-      type: 'negative',
-      message: 'Please select a specialty',
-    })
+    $q.notify({ type: 'negative', message: 'Please select a specialty' })
     return
   }
 
   if (!form.value.agreeTerms) {
-    $q.notify({
-      type: 'negative',
-      message: 'You must agree to the terms and conditions',
-    })
+    $q.notify({ type: 'negative', message: 'You must agree to the terms and conditions' })
     return
   }
 
-  // Sign up successful
-  $q.notify({
-    type: 'positive',
-    message: `Welcome ${form.value.fullName}! Account created successfully.`,
-  })
-  console.log('Sign up successful — navigating to /home')
-  await new Promise((r) => setTimeout(r, 250))
-  // Navigate to home page
-  router.push('/home')
-  // Reset form
-  form.value = {
-    fullName: '',
-    email: '',
-    password: '',
-    confirmPassword: '',
-    role: '',
-    specialty: null,
-    agreeTerms: false,
+  loading.value = true
+
+  try {
+    console.log('Starting sign up for:', form.value.email)
+
+    // 1. Create auth user with profile metadata
+    const { data: authData, error: authError } = await supabase.auth.signUp({
+      email: form.value.email,
+      password: form.value.password,
+      options: {
+        data: {
+          full_name: form.value.fullName,
+          role: form.value.role,
+          specialty: form.value.specialty,
+          years_of_experience: form.value.yearsOfExperience,
+        },
+      },
+    })
+
+    console.log('Auth signUp response:', { authData, authError })
+
+    if (authError) {
+      $q.notify({ type: 'negative', message: authError.message })
+      return
+    }
+
+    // 2. Insert profile row into the appropriate table
+    const table = form.value.role === 'customer' ? 'users' : 'technician'
+    console.log('Inserting into table:', table)
+
+    const { error: insertError } = await supabase.from(table).insert({
+      full_name: form.value.fullName,
+      email: form.value.email,
+      phone_number: form.value.phoneNumber,
+      ...(form.value.role === 'fixer' && {
+        specialty: form.value.specialty,
+        years_of_experience: Number(form.value.yearsOfExperience),
+      }),
+    })
+
+    if (insertError) {
+      console.warn('Profile insert failed:', insertError.message)
+    } else {
+      console.log('Profile insert succeeded')
+    }
+
+    // Success — auth user was created
+    $q.notify({
+      type: 'positive',
+      message: `Welcome ${form.value.fullName}! Account created successfully.`,
+    })
+
+    // Reset form
+    form.value = {
+      fullName: '',
+      email: '',
+      phoneNumber: '',
+      password: '',
+      confirmPassword: '',
+      role: '',
+      specialty: null,
+      yearsOfExperience: null,
+      agreeTerms: false,
+    }
+
+    router.push('/home')
+  } catch (err) {
+    $q.notify({ type: 'negative', message: 'An unexpected error occurred. Please try again.' })
+    console.error(err)
+  } finally {
+    loading.value = false
   }
 }
 </script>
