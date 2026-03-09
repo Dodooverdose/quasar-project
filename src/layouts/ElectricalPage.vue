@@ -149,6 +149,7 @@
 import { ref, onBeforeUnmount } from 'vue'
 import { useRouter } from 'vue-router'
 import { useQuasar } from 'quasar'
+import { supabase } from 'src/boot/supabase'
 
 const router = useRouter()
 const $q = useQuasar()
@@ -164,8 +165,12 @@ const urgencyOptions = [
   { label: 'Urgent', value: 'urgent' },
 ]
 
-const goBack = () => {
-  router.push('/home')
+const goBack = async () => {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  const role = user?.user_metadata?.role
+  router.push(role === 'fixer' ? '/service-provider' : '/home')
 }
 
 const openImagePicker = () => {

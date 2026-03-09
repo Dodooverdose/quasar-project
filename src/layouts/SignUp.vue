@@ -322,7 +322,6 @@ const onSubmit = async () => {
     })
 
     const selectedRole = form.value.role
-    const selectedSpecialty = form.value.specialty
 
     // Reset form
     form.value = {
@@ -338,15 +337,7 @@ const onSubmit = async () => {
     }
 
     if (selectedRole === 'fixer') {
-      const specialtyRoutes = {
-        plumber: '/plumbing',
-        electrician: '/electrical',
-        carpenter: '/carpentry',
-        painter: '/painters',
-        kitchen_fitter: '/kitchen',
-        drapery_seamstress: '/drapery',
-      }
-      router.push(specialtyRoutes[selectedSpecialty] || '/service-provider')
+      router.push('/service-provider')
     } else {
       router.push('/home')
     }

@@ -199,18 +199,9 @@ const onSubmit = async () => {
     }
 
     const role = data.user?.user_metadata?.role
-    const specialty = data.user?.user_metadata?.specialty
 
     if (role === 'fixer') {
-      const specialtyRoutes = {
-        plumber: '/plumbing',
-        electrician: '/electrical',
-        carpenter: '/carpentry',
-        painter: '/painters',
-        kitchen_fitter: '/kitchen',
-        drapery_seamstress: '/drapery',
-      }
-      router.push(specialtyRoutes[specialty] || '/service-provider')
+      router.push('/service-provider')
     } else {
       router.push('/home')
     }
