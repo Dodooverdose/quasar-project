@@ -93,6 +93,36 @@
             <q-icon name="warning" color="grey-6" size="sm" class="q-ml-sm" />
           </div>
 
+          <div class="payment-row q-mb-md">
+            <div class="text-subtitle2 q-mb-sm">Payment Method</div>
+            <div class="payment-options">
+              <q-btn
+                :outline="paymentMethod !== 'cash'"
+                :color="paymentMethod === 'cash' ? 'primary' : 'grey-7'"
+                class="payment-btn"
+                @click="selectCash"
+              >
+                <q-icon
+                  name="payments"
+                  :class="['q-mr-sm', { 'cash-count-anim': cashAnimating }]"
+                />
+                Cash
+              </q-btn>
+              <q-btn
+                :outline="paymentMethod !== 'instapay'"
+                :color="paymentMethod === 'instapay' ? 'primary' : 'grey-7'"
+                class="payment-btn"
+                @click="selectInstapay"
+              >
+                <q-icon
+                  name="credit_card"
+                  :class="['q-mr-sm', { 'card-flip-anim': cardFlipping }]"
+                />
+                Instapay
+              </q-btn>
+            </div>
+          </div>
+
           <div class="attachments-row q-mb-md">
             <q-btn flat round icon="add_a_photo" color="primary" size="md" @click="openImagePicker">
               <q-tooltip>Attach Photos</q-tooltip>
@@ -151,7 +181,7 @@
 </template>
 
 <script setup>
-import { ref, onBeforeUnmount } from 'vue'
+import { ref, nextTick, onBeforeUnmount } from 'vue'
 import { useRouter } from 'vue-router'
 import { useQuasar } from 'quasar'
 
@@ -164,11 +194,36 @@ const location = ref(null)
 const appointmentDate = ref(null)
 const appointmentTime = ref(null)
 const amPm = ref('AM')
+const paymentMethod = ref('cash')
+const cashAnimating = ref(false)
+const cardFlipping = ref(false)
 const urgency = ref('standard')
 const urgencyOptions = [
   { label: 'Standard', value: 'standard' },
   { label: 'Urgent', value: 'urgent' },
 ]
+
+const selectInstapay = () => {
+  paymentMethod.value = 'instapay'
+  cardFlipping.value = false
+  nextTick(() => {
+    cardFlipping.value = true
+    setTimeout(() => {
+      cardFlipping.value = false
+    }, 600)
+  })
+}
+
+const selectCash = () => {
+  paymentMethod.value = 'cash'
+  cashAnimating.value = false
+  nextTick(() => {
+    cashAnimating.value = true
+    setTimeout(() => {
+      cashAnimating.value = false
+    }, 700)
+  })
+}
 
 const goBack = () => {
   router.push('/home')
@@ -224,6 +279,7 @@ const submitRequest = () => {
   appointmentDate.value = null
   appointmentTime.value = null
   amPm.value = 'AM'
+  paymentMethod.value = 'cash'
   urgency.value = 'standard'
 }
 
@@ -255,6 +311,70 @@ onBeforeUnmount(() => {
 }
 .date-time-row .ampm-select {
   flex: 0 0 90px;
+}
+
+.payment-row {
+  display: flex;
+  flex-direction: column;
+}
+
+.payment-options {
+  display: flex;
+  gap: 12px;
+}
+
+.payment-btn {
+  flex: 1;
+  font-weight: 600;
+}
+
+@keyframes cash-count {
+  0% {
+    transform: translateY(0) rotate(0deg) scale(1);
+  }
+  15% {
+    transform: translateY(-4px) rotate(-12deg) scale(1.25);
+  }
+  30% {
+    transform: translateY(0) rotate(12deg) scale(1.15);
+  }
+  50% {
+    transform: translateY(-4px) rotate(-8deg) scale(1.2);
+  }
+  70% {
+    transform: translateY(0) rotate(8deg) scale(1.1);
+  }
+  85% {
+    transform: translateY(-2px) rotate(-4deg) scale(1.05);
+  }
+  100% {
+    transform: translateY(0) rotate(0deg) scale(1);
+  }
+}
+
+.cash-count-anim {
+  animation: cash-count 0.7s ease;
+  display: inline-block;
+}
+
+@keyframes card-flip {
+  0% {
+    transform: perspective(400px) rotateY(0deg);
+  }
+  40% {
+    transform: perspective(400px) rotateY(-180deg) scale(1.2);
+  }
+  70% {
+    transform: perspective(400px) rotateY(-340deg) scale(1.05);
+  }
+  100% {
+    transform: perspective(400px) rotateY(-360deg);
+  }
+}
+
+.card-flip-anim {
+  animation: card-flip 0.6s ease;
+  display: inline-block;
 }
 
 .urgency-row {
