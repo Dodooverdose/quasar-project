@@ -83,6 +83,20 @@
             />
           </div>
 
+          <q-select
+            v-model="district"
+            :options="cairoDistricts"
+            label="District"
+            filled
+            outlined
+            clearable
+            class="q-mb-md"
+          >
+            <template #prepend>
+              <q-icon name="location_city" />
+            </template>
+          </q-select>
+
           <div class="urgency-row q-mb-md">
             <q-select
               v-model="urgency"
@@ -94,7 +108,12 @@
               map-options
               style="flex: 1"
             />
-            <q-icon name="warning" color="grey-6" size="sm" class="q-ml-sm" />
+            <q-icon
+              name="warning"
+              :color="urgency === 'urgent' ? 'amber' : 'grey-6'"
+              size="sm"
+              class="q-ml-sm"
+            />
           </div>
 
           <div class="payment-row q-mb-md">
@@ -201,6 +220,57 @@ const amPm = ref('AM')
 const paymentMethod = ref('cash')
 const cashAnimating = ref(false)
 const cardFlipping = ref(false)
+const district = ref(null)
+const cairoDistricts = [
+  'Downtown / Wust El-Balad',
+  'Abdeen',
+  'Azbakeya',
+  "Bab El-Sha'reya",
+  'El-Gamaliya',
+  'El-Mosky',
+  'El-Darb El-Ahmar',
+  'El-Khalifa',
+  'El-Sayeda Zeinab',
+  'Zamalek',
+  'Garden City',
+  'Bulaq',
+  'Shubra',
+  'Rod El-Farag',
+  'El-Sharabiya',
+  'El-Zawya El-Hamra',
+  'El-Wayli',
+  'Abbassia',
+  'Heliopolis / Masr El-Gedida',
+  'Nasr City',
+  'Ain Shams',
+  'El-Matareya',
+  'El-Marg',
+  'El-Salam',
+  'Maadi',
+  'Misr El-Kadima / Old Cairo',
+  'Basatin',
+  'Helwan',
+  '15th of May City',
+  'Tura',
+  'New Cairo / El-Tagammu',
+  'Rehab City',
+  'Madinaty',
+  'Shorouk City',
+  'Obour City',
+  'Badr City',
+  'Dokki',
+  'Mohandessin',
+  'Agouza',
+  'Imbaba',
+  'Bulaq El-Dakrour',
+  'El-Haram',
+  'Faisal',
+  'El-Omraniya',
+  'Giza',
+  '6th of October City',
+  'Sheikh Zayed',
+  'Hadayek El-Ahram',
+]
 const urgency = ref('standard')
 const urgencyOptions = [
   { label: 'Standard', value: 'standard' },
@@ -258,8 +328,18 @@ const attachLocation = () => {
   }
   $q.loading.show({ message: 'Getting location...' })
   navigator.geolocation.getCurrentPosition(
-    (pos) => {
-      location.value = `${pos.coords.latitude.toFixed(5)}, ${pos.coords.longitude.toFixed(5)}`
+    async (pos) => {
+      const { latitude, longitude } = pos.coords
+      try {
+        const res = await fetch(
+          `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`,
+          { headers: { 'Accept-Language': 'en' } },
+        )
+        const data = await res.json()
+        location.value = data.display_name || `${latitude.toFixed(5)}, ${longitude.toFixed(5)}`
+      } catch {
+        location.value = `${latitude.toFixed(5)}, ${longitude.toFixed(5)}`
+      }
       $q.loading.hide()
       $q.notify({ type: 'positive', message: 'Location attached!' })
     },
@@ -285,6 +365,7 @@ const submitRequest = () => {
   amPm.value = 'AM'
   paymentMethod.value = 'cash'
   urgency.value = 'standard'
+  district.value = null
 }
 
 onBeforeUnmount(() => {

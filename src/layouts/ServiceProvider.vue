@@ -30,13 +30,13 @@
           <q-btn flat dense round icon="close" @click="showNotifications = false" />
         </q-card-section>
         <q-separator />
-        <q-list v-if="notifications.length > 0" separator>
+        <q-list v-if="filteredNotifications.length > 0" separator>
           <q-item
-            v-for="(notif, i) in notifications"
+            v-for="(notif, i) in filteredNotifications"
             :key="i"
             :class="{ 'bg-blue-1': !notif.read }"
             clickable
-            @click="markAsRead(i)"
+            @click="markAsRead(notif._index)"
           >
             <q-item-section avatar>
               <q-avatar color="primary" text-color="white" icon="person" />
@@ -44,6 +44,9 @@
             <q-item-section>
               <q-item-label>{{ notif.customerName }}</q-item-label>
               <q-item-label caption>{{ notif.message }}</q-item-label>
+              <q-item-label caption class="text-grey-6">
+                <q-icon name="location_city" size="xs" class="q-mr-xs" />{{ notif.district }}
+              </q-item-label>
               <q-item-label caption class="text-grey-6">{{ notif.time }}</q-item-label>
             </q-item-section>
             <q-item-section side>
@@ -55,7 +58,7 @@
                   color="positive"
                   icon="check"
                   size="sm"
-                  @click.stop="acceptRequest(i)"
+                  @click.stop="acceptRequest(notif._index)"
                 />
                 <q-btn
                   dense
@@ -64,14 +67,14 @@
                   color="negative"
                   icon="close"
                   size="sm"
-                  @click.stop="declineRequest(i)"
+                  @click.stop="declineRequest(notif._index)"
                 />
               </div>
             </q-item-section>
           </q-item>
         </q-list>
         <q-card-section v-else class="text-center text-grey-5 q-py-lg">
-          No Requests Yet
+          {{ selectedDistricts.length ? 'No requests in selected districts' : 'No Requests Yet' }}
         </q-card-section>
       </q-card>
     </q-dialog>
@@ -113,10 +116,79 @@
 
           <q-separator class="q-my-md" />
 
-          <div class="text-h6 q-mb-md">Incoming Requests</div>
-          <div class="text-body2 text-grey-6 text-center q-pa-lg">
-            No requests yet. New job requests will appear here.
+          <div class="text-h6 q-mb-sm">Incoming Requests</div>
+
+          <!-- District Filter -->
+          <q-select
+            v-model="selectedDistricts"
+            :options="cairoDistricts"
+            label="Filter by District"
+            filled
+            outlined
+            multiple
+            use-chips
+            clearable
+            class="q-mb-md district-filter"
+          >
+            <template #prepend>
+              <q-icon name="location_city" />
+            </template>
+          </q-select>
+
+          <div
+            v-if="filteredNotifications.length === 0"
+            class="text-body2 text-grey-6 text-center q-pa-lg"
+          >
+            {{
+              selectedDistricts.length
+                ? 'No requests in selected districts.'
+                : 'No requests yet. New job requests will appear here.'
+            }}
           </div>
+
+          <q-list v-else separator class="rounded-borders">
+            <q-item
+              v-for="notif in filteredNotifications"
+              :key="notif._index"
+              :class="{ 'bg-blue-1': !notif.read }"
+              clickable
+              @click="markAsRead(notif._index)"
+            >
+              <q-item-section avatar>
+                <q-avatar color="primary" text-color="white" icon="person" />
+              </q-item-section>
+              <q-item-section>
+                <q-item-label>{{ notif.customerName }}</q-item-label>
+                <q-item-label caption>{{ notif.message }}</q-item-label>
+                <q-item-label caption class="text-grey-6">
+                  <q-icon name="location_city" size="xs" class="q-mr-xs" />{{ notif.district }}
+                </q-item-label>
+                <q-item-label caption class="text-grey-6">{{ notif.time }}</q-item-label>
+              </q-item-section>
+              <q-item-section side>
+                <div class="row q-gutter-xs">
+                  <q-btn
+                    dense
+                    flat
+                    round
+                    color="positive"
+                    icon="check"
+                    size="sm"
+                    @click.stop="acceptRequest(notif._index)"
+                  />
+                  <q-btn
+                    dense
+                    flat
+                    round
+                    color="negative"
+                    icon="close"
+                    size="sm"
+                    @click.stop="declineRequest(notif._index)"
+                  />
+                </div>
+              </q-item-section>
+            </q-item>
+          </q-list>
         </div>
       </q-page>
     </q-page-container>
@@ -138,8 +210,66 @@ const specialty = ref('')
 const yearsOfExperience = ref(null)
 const showNotifications = ref(false)
 const notifications = ref([])
+const selectedDistricts = ref([])
+
+const cairoDistricts = [
+  'Downtown / Wust El-Balad',
+  'Abdeen',
+  'Azbakeya',
+  "Bab El-Sha'reya",
+  'El-Gamaliya',
+  'El-Mosky',
+  'El-Darb El-Ahmar',
+  'El-Khalifa',
+  'El-Sayeda Zeinab',
+  'Zamalek',
+  'Garden City',
+  'Bulaq',
+  'Shubra',
+  'Rod El-Farag',
+  'El-Sharabiya',
+  'El-Zawya El-Hamra',
+  'El-Wayli',
+  'Abbassia',
+  'Heliopolis / Masr El-Gedida',
+  'Nasr City',
+  'Ain Shams',
+  'El-Matareya',
+  'El-Marg',
+  'El-Salam',
+  'Maadi',
+  'Misr El-Kadima / Old Cairo',
+  'Basatin',
+  'Helwan',
+  '15th of May City',
+  'Tura',
+  'New Cairo / El-Tagammu',
+  'Rehab City',
+  'Madinaty',
+  'Shorouk City',
+  'Obour City',
+  'Badr City',
+  'Dokki',
+  'Mohandessin',
+  'Agouza',
+  'Imbaba',
+  'Bulaq El-Dakrour',
+  'El-Haram',
+  'Faisal',
+  'El-Omraniya',
+  'Giza',
+  '6th of October City',
+  'Sheikh Zayed',
+  'Hadayek El-Ahram',
+]
 
 const unreadCount = computed(() => notifications.value.filter((n) => !n.read).length)
+
+const filteredNotifications = computed(() => {
+  const indexed = notifications.value.map((n, i) => ({ ...n, _index: i }))
+  if (!selectedDistricts.value.length) return indexed
+  return indexed.filter((n) => selectedDistricts.value.includes(n.district))
+})
 
 const markAsRead = (index) => {
   notifications.value[index].read = true
@@ -220,5 +350,9 @@ onMounted(async () => {
   display: flex;
   align-items: center;
   gap: 10px;
+}
+
+.district-filter {
+  width: 100%;
 }
 </style>
