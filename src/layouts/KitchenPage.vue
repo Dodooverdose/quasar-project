@@ -8,17 +8,22 @@
           <img src="/icons/White.png" alt="San3a" style="height: 40px; margin-left: 10px" />
         </q-toolbar-title>
         <q-space />
-        <img
-          src="/icons/kitchen.png"
-          alt="Kitchen Utilities"
-          style="height: 36px; object-fit: contain"
-        />
+        <img src="/icons/kitchen.png" alt="Kitchen Utilities" style="height: 36px; object-fit: contain" />
       </q-toolbar>
     </q-header>
 
     <q-page-container>
       <q-page class="page-content">
         <div class="request-card">
+          <q-tabs v-model="activeTab" dense class="text-primary q-mb-md" align="justify" narrow-indicator>
+            <q-tab name="post" label="Post Request" icon="edit" />
+            <q-tab name="history" label="Request History" icon="history" />
+          </q-tabs>
+
+          <q-separator class="q-mb-md" />
+
+          <!-- POST REQUEST TAB -->
+          <div v-if="activeTab === 'post'">
           <div class="text-h6 q-mb-md">Post a Request</div>
 
           <q-input
@@ -197,6 +202,84 @@
               @click="location = null"
             />
           </div>
+          </div>
+
+          <!-- REQUEST HISTORY TAB -->
+          <div v-if="activeTab === 'history'">
+            <div class="row items-center justify-between q-mb-md">
+              <div class="text-h6">Request History</div>
+              <q-badge v-if="!historyLoading && requestHistory.length" color="primary" :label="`${requestHistory.length} request${requestHistory.length > 1 ? 's' : ''}`" class="text-body2 q-pa-sm" />
+            </div>
+
+            <div v-if="historyLoading" class="text-center q-pa-xl">
+              <q-spinner color="primary" size="48px" />
+              <div class="q-mt-md text-grey-7">Loading your requests...</div>
+            </div>
+
+            <div v-else-if="historyError" class="text-center q-pa-xl">
+              <q-icon name="error" size="64px" color="negative" />
+              <div class="text-h6 text-negative q-mt-md">Failed to load requests</div>
+              <div class="text-body2 text-grey-7 q-mt-sm">{{ historyError }}</div>
+              <q-btn flat color="primary" label="Retry" icon="refresh" class="q-mt-sm" @click="fetchHistory" />
+            </div>
+
+            <div v-else-if="requestHistory.length === 0" class="text-center q-pa-xl">
+              <q-icon name="inbox" size="64px" color="grey-5" />
+              <div class="text-h6 text-grey-6 q-mt-md">You haven't posted any requests yet.</div>
+              <q-btn flat color="primary" label="Post your first request" icon="edit" class="q-mt-sm" @click="activeTab = 'post'" />
+            </div>
+
+            <div v-else class="row q-col-gutter-md">
+              <div v-for="req in requestHistory" :key="req.request_id" class="col-12 col-sm-6 col-md-6">
+                <q-card bordered flat class="history-card">
+                  <q-card-section>
+                    <div class="row items-center justify-between q-mb-sm">
+                      <div class="text-subtitle1 text-weight-bold ellipsis" style="max-width: 70%">
+                        Request #{{ req.request_id }}
+                      </div>
+                      <q-badge :color="statusColor(req.request_status)" :label="req.request_status || 'pending'" />
+                    </div>
+                    <div class="text-body2 q-mb-md" style="white-space: pre-line">{{ req.description_of_issue || 'No description' }}</div>
+
+                    <q-separator class="q-mb-sm" />
+
+                    <div class="history-details">
+                      <div v-if="req.request_date" class="detail-row">
+                        <q-icon name="event" size="xs" color="grey-7" />
+                        <span>{{ formatDate(req.request_date) }}</span>
+                      </div>
+                      <div v-if="req.schedule_time" class="detail-row">
+                        <q-icon name="schedule" size="xs" color="grey-7" />
+                        <span>Scheduled: {{ formatDate(req.schedule_time) }}</span>
+                      </div>
+                      <div v-if="req.service_location" class="detail-row">
+                        <q-icon name="location_on" size="xs" color="grey-7" />
+                        <span>{{ req.service_location }}</span>
+                      </div>
+                      <div v-if="req.payment_method" class="detail-row">
+                        <q-icon name="payments" size="xs" color="grey-7" />
+                        <span class="text-capitalize">{{ req.payment_method }}</span>
+                      </div>
+                    </div>
+                  </q-card-section>
+
+                  <q-separator v-if="req.urgency || req.customer_price || req.fixer_price" />
+
+                  <q-card-section v-if="req.urgency || req.customer_price || req.fixer_price" class="q-py-sm">
+                    <div class="row items-center q-gutter-sm">
+                      <q-badge v-if="req.urgency" :color="req.urgency === 'urgent' ? 'red' : 'blue'" :label="req.urgency" />
+                      <q-chip v-if="req.customer_price" dense size="sm" color="green-2" text-color="green-9" icon="person">
+                        {{ req.customer_price }} EGP
+                      </q-chip>
+                      <q-chip v-if="req.fixer_price" dense size="sm" color="orange-2" text-color="orange-9" icon="build">
+                        {{ req.fixer_price }} EGP
+                      </q-chip>
+                    </div>
+                  </q-card-section>
+                </q-card>
+              </div>
+            </div>
+          </div>
         </div>
       </q-page>
     </q-page-container>
@@ -204,14 +287,46 @@
 </template>
 
 <script setup>
-import { ref, nextTick, onBeforeUnmount } from 'vue'
+import { ref, nextTick, onMounted, onBeforeUnmount, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useQuasar } from 'quasar'
+import { supabase } from 'src/boot/supabase'
 
 const router = useRouter()
 const $q = useQuasar()
 const imageInputRef = ref(null)
 const requestText = ref('')
+const currentUserId = ref(null)
+const activeTab = ref('post')
+const requestHistory = ref([])
+const historyLoading = ref(false)
+
+onMounted(async () => {
+  const { data: { user } } = await supabase.auth.getUser()
+  if (user) {
+    const { data: customer } = await supabase
+      .from('users')
+      .select('user_id')
+      .ilike('email', user.email)
+      .maybeSingle()
+    if (customer) {
+      currentUserId.value = customer.user_id
+    }
+    if (!currentUserId.value) {
+      const { data: tech } = await supabase
+        .from('technician')
+        .select('technician_id')
+        .ilike('email', user.email)
+        .maybeSingle()
+      if (tech) {
+        currentUserId.value = tech.technician_id
+      }
+    }
+  }
+  if (currentUserId.value) {
+    await fetchHistory()
+  }
+})
 const selectedImages = ref([])
 const location = ref(null)
 const appointmentDate = ref(null)
@@ -303,6 +418,43 @@ const goBack = () => {
   router.push('/home')
 }
 
+const historyError = ref(null)
+
+const fetchHistory = async () => {
+  if (!currentUserId.value) return
+  historyLoading.value = true
+  historyError.value = null
+  const { data, error } = await supabase
+    .from('request')
+    .select('*')
+    .eq('user_id', currentUserId.value)
+    .eq('service_type', 'kitchen_fitter')
+    .order('request_date', { ascending: false })
+  if (error) {
+    historyError.value = error.message
+  } else {
+    requestHistory.value = data || []
+  }
+  historyLoading.value = false
+}
+
+watch(activeTab, (tab) => {
+  if (tab === 'history') fetchHistory()
+})
+
+const formatDate = (dateStr) => {
+  if (!dateStr) return ''
+  // Supabase timestamps are UTC — append Z so the browser converts to local time
+  const utcStr = dateStr.endsWith('Z') || dateStr.includes('+') ? dateStr : dateStr + 'Z'
+  const d = new Date(utcStr)
+  return d.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
+}
+
+const statusColor = (status) => {
+  const map = { pending: 'orange', accepted: 'blue', completed: 'green', cancelled: 'red' }
+  return map[status?.toLowerCase()] || 'grey'
+}
+
 const openImagePicker = () => {
   imageInputRef.value?.click()
 }
@@ -350,11 +502,41 @@ const attachLocation = () => {
   )
 }
 
-const submitRequest = () => {
+const submitRequest = async () => {
   if (!requestText.value.trim()) {
     $q.notify({ type: 'warning', message: 'Please describe your issue' })
     return
   }
+  if (!currentUserId.value) {
+    $q.notify({ type: 'negative', message: 'You must be signed in to submit a request' })
+    return
+  }
+
+  // Build schedule_time from date + time + AM/PM
+  let scheduleTime = null
+  if (appointmentDate.value && appointmentTime.value) {
+    const [hh, mm] = appointmentTime.value.split(':')
+    let hours = parseInt(hh, 10)
+    if (amPm.value === 'PM' && hours < 12) hours += 12
+    if (amPm.value === 'AM' && hours === 12) hours = 0
+    scheduleTime = `${appointmentDate.value}T${String(hours).padStart(2, '0')}:${mm}:00`
+  }
+
+  const { error } = await supabase.from('request').insert({
+    description_of_issue: requestText.value.trim(),
+    schedule_time: scheduleTime,
+    service_location: district.value || null,
+    payment_method: paymentMethod.value,
+    urgency: urgency.value,
+    user_id: currentUserId.value,
+    service_type: 'kitchen_fitter',
+  })
+
+  if (error) {
+    $q.notify({ type: 'negative', message: 'Failed to submit request: ' + error.message })
+    return
+  }
+
   $q.notify({ type: 'positive', message: 'Request submitted successfully!' })
   requestText.value = ''
   selectedImages.value.forEach((img) => URL.revokeObjectURL(img.url))
@@ -366,6 +548,7 @@ const submitRequest = () => {
   paymentMethod.value = 'cash'
   urgency.value = 'standard'
   district.value = null
+  fetchHistory()
 }
 
 onBeforeUnmount(() => {
@@ -509,5 +692,27 @@ onBeforeUnmount(() => {
   align-items: center;
   font-size: 13px;
   color: #666;
+}
+
+.history-card {
+  border-radius: 12px;
+  transition: box-shadow 0.2s;
+}
+.history-card:hover {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+}
+
+.history-details {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.detail-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: #555;
 }
 </style>
