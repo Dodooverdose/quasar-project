@@ -17,7 +17,6 @@
         >
           <q-badge v-if="unreadCount > 0" color="red" floating>{{ unreadCount }}</q-badge>
         </q-btn>
-        <q-btn flat round dense icon="account_circle" to="/profile" aria-label="User profile" />
       </q-toolbar>
     </q-header>
 
@@ -115,11 +114,17 @@
 
           <!-- INCOMING REQUESTS -->
           <div class="row items-center justify-between full-width q-mb-sm">
-            <div class="text-h6">Incoming Requests</div>
+            <div class="text-h6">
+              {{ activeTab === 'orders' ? 'Accepted Orders' : 'Incoming Requests' }}
+            </div>
             <q-badge
               v-if="requests.length"
               color="primary"
-              :label="`${requests.length} request${requests.length > 1 ? 's' : ''}`"
+              :label="
+                activeTab === 'orders'
+                  ? `${requests.length} order${requests.length > 1 ? 's' : ''}`
+                  : `${requests.length} request${requests.length > 1 ? 's' : ''}`
+              "
               class="text-body2 q-pa-sm"
             />
           </div>
@@ -158,7 +163,7 @@
               label="Retry"
               icon="refresh"
               class="q-mt-sm"
-              @click="fetchRequests"
+              @click="activeTab === 'orders' ? fetchAcceptedOrders() : fetchRequests()"
             />
           </div>
 
@@ -167,9 +172,11 @@
             <q-icon name="inbox" size="64px" color="grey-5" />
             <div class="text-h6 text-grey-6 q-mt-md">
               {{
-                selectedDistricts.length
-                  ? 'No requests in selected districts.'
-                  : `No requests available for your specialty yet.`
+                activeTab === 'orders'
+                  ? 'No accepted orders yet.'
+                  : selectedDistricts.length
+                    ? 'No requests in selected districts.'
+                    : `No requests available for your specialty yet.`
               }}
             </div>
           </div>
@@ -253,6 +260,7 @@
                   </div>
                   <q-btn
                     v-else
+                    v-show="activeTab !== 'orders'"
                     color="primary"
                     label="Place Bid"
                     icon="gavel"
@@ -324,6 +332,26 @@
         </q-card-actions>
       </q-card>
     </q-dialog>
+
+    <q-footer elevated class="bottom-nav">
+      <q-tabs
+        v-model="activeTab"
+        active-color="white"
+        indicator-color="transparent"
+        class="nav-tabs"
+        narrow-indicator
+        dense
+      >
+        <q-tab
+          name="requests"
+          icon="request_page"
+          label="Requests"
+          @click="setActiveTab('requests')"
+        />
+        <q-tab name="orders" icon="receipt_long" label="Orders" @click="setActiveTab('orders')" />
+        <q-tab name="profile" icon="person" label="Profile" @click="goToPage('/profile')" />
+      </q-tabs>
+    </q-footer>
   </q-layout>
 </template>
 
@@ -337,8 +365,22 @@ const router = useRouter()
 const $q = useQuasar()
 
 const showNotifications = ref(false)
+const activeTab = ref('requests')
 const notifications = ref([])
 const unreadCount = computed(() => notifications.value.filter((n) => !n.read).length)
+
+const goToPage = (route) => {
+  if (route) router.push(route)
+}
+
+const setActiveTab = async (tab) => {
+  activeTab.value = tab
+  if (tab === 'orders') {
+    await fetchAcceptedOrders()
+    return
+  }
+  await fetchRequests()
+}
 
 const markAsRead = (index) => {
   notifications.value[index].read = true
@@ -478,24 +520,48 @@ const fetchRequests = async () => {
     return
   }
 
-  // Fetch this technician's existing offers
-  let myOffers = {}
-  if (technicianId.value) {
-    const { data: offers } = await supabase
-      .from('offer')
-      .select('*')
-      .eq('technician_id', technicianId.value)
-    if (offers) {
-      offers.forEach((o) => {
-        myOffers[o.request_id] = o
-      })
-    }
+  requests.value = (data || []).map((r) => ({
+    ...r,
+    customer_name: r.users?.full_name || null,
+    myOffer: r.fixer_price
+      ? {
+          offered_price: r.fixer_price,
+          status: r.request_status || 'pending',
+        }
+      : null,
+  }))
+
+  requestsLoading.value = false
+}
+
+const fetchAcceptedOrders = async () => {
+  if (!specialty.value) return
+
+  requestsLoading.value = true
+  requestsError.value = null
+
+  const { data, error } = await supabase
+    .from('request')
+    .select('*, users:user_id(full_name)')
+    .eq('service_type', specialty.value)
+    .eq('request_status', 'accepted')
+    .order('request_date', { ascending: false })
+
+  if (error) {
+    requestsError.value = error.message
+    requestsLoading.value = false
+    return
   }
 
   requests.value = (data || []).map((r) => ({
     ...r,
     customer_name: r.users?.full_name || null,
-    myOffer: myOffers[r.request_id] || null,
+    myOffer: r.fixer_price
+      ? {
+          offered_price: r.fixer_price,
+          status: r.request_status || 'accepted',
+        }
+      : null,
   }))
 
   requestsLoading.value = false
@@ -503,7 +569,7 @@ const fetchRequests = async () => {
 
 const openOfferDialog = (req) => {
   offerTarget.value = req
-  offerPrice.value = req.customer_price || null
+  offerPrice.value = req.fixer_price || req.customer_price || null
   offerMessage.value = ''
   offerDialogOpen.value = true
 }
@@ -512,12 +578,12 @@ const submitOffer = async () => {
   if (!offerTarget.value || !offerPrice.value || offerPrice.value <= 0) return
   offerSubmitting.value = true
 
-  const { error } = await supabase.from('offer').insert({
-    request_id: offerTarget.value.request_id,
-    technician_id: technicianId.value,
-    offered_price: offerPrice.value,
-    message: offerMessage.value.trim() || null,
-  })
+  const { error } = await supabase
+    .from('request')
+    .update({
+      fixer_price: offerPrice.value,
+    })
+    .eq('request_id', offerTarget.value.request_id)
 
   offerSubmitting.value = false
 
@@ -584,6 +650,7 @@ onMounted(async () => {
   display: flex;
   justify-content: center;
   padding: 24px 16px;
+  padding-bottom: 72px;
 }
 
 .dashboard-card {
@@ -625,5 +692,30 @@ onMounted(async () => {
   gap: 8px;
   font-size: 13px;
   color: #555;
+}
+
+.bottom-nav {
+  background: linear-gradient(135deg, #2e7d32, #388e3c) !important;
+  box-shadow: 0 -2px 12px rgba(0, 0, 0, 0.12);
+}
+
+.nav-tabs {
+  height: 60px;
+}
+
+.nav-tabs :deep(.q-tab) {
+  min-height: 60px;
+  font-size: 11px;
+  text-transform: none;
+  opacity: 0.75;
+  transition: opacity 0.2s ease;
+}
+
+.nav-tabs :deep(.q-tab--active) {
+  opacity: 1;
+}
+
+.nav-tabs :deep(.q-tab__icon) {
+  font-size: 24px;
 }
 </style>

@@ -29,6 +29,20 @@
             @change="onFileChange"
           />
 
+          <div class="profile-info">
+            <div v-if="profileLoading" class="text-grey-7">Loading profile...</div>
+            <template v-else>
+              <div class="profile-name">{{ profileName || 'Unknown User' }}</div>
+              <div class="profile-email">{{ profileEmail || 'No email found' }}</div>
+              <div v-if="isFixer && specialtyLabel" class="profile-extra">
+                Specialty: {{ specialtyLabel }}
+              </div>
+              <div v-if="isFixer && yearsOfExperience !== null" class="profile-extra">
+                Years of experience: {{ yearsOfExperience }}
+              </div>
+            </template>
+          </div>
+
           <div class="profile-actions">
             <q-btn color="secondary" class="action-btn" @click="showSettings = !showSettings">
               <q-icon
@@ -58,9 +72,10 @@
 </template>
 
 <script setup>
-import { onBeforeUnmount, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useQuasar } from 'quasar'
+import { supabase } from 'src/boot/supabase'
 
 const router = useRouter()
 const $q = useQuasar()
@@ -68,7 +83,81 @@ const fileInputRef = ref(null)
 const avatarUrl = ref('/icons/pfp.png')
 const showSettings = ref(false)
 const darkMode = ref($q.dark.isActive)
+const profileLoading = ref(true)
+const profileName = ref('')
+const profileEmail = ref('')
+const isFixer = ref(false)
+const specialty = ref('')
+const yearsOfExperience = ref(null)
+const specialtyLabel = computed(() =>
+  specialty.value
+    ? specialty.value
+        .split('_')
+        .join(' ')
+        .replace(/\b\w/g, (char) => char.toUpperCase())
+    : '',
+)
 let objectUrl = null
+
+const loadProfile = async () => {
+  profileLoading.value = true
+  try {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+
+    if (!user) {
+      router.push('/signin')
+      return
+    }
+
+    const userEmail = user.email || ''
+    profileEmail.value = userEmail
+    isFixer.value = user.user_metadata?.role === 'fixer'
+
+    if (isFixer.value) {
+      const { data: tech } = await supabase
+        .from('technician')
+        .select('full_name, email, specialty, years_of_experience')
+        .ilike('email', userEmail)
+        .maybeSingle()
+
+      if (tech) {
+        profileName.value = tech.full_name || user.user_metadata?.full_name || ''
+        profileEmail.value = tech.email || userEmail
+        specialty.value = tech.specialty || user.user_metadata?.specialty || ''
+        yearsOfExperience.value = tech.years_of_experience ?? null
+      } else {
+        profileName.value = user.user_metadata?.full_name || ''
+        specialty.value = user.user_metadata?.specialty || ''
+        yearsOfExperience.value = user.user_metadata?.years_of_experience ?? null
+      }
+      return
+    }
+
+    specialty.value = ''
+
+    const { data: customer } = await supabase
+      .from('users')
+      .select('full_name, email')
+      .ilike('email', userEmail)
+      .maybeSingle()
+
+    if (customer) {
+      profileName.value = customer.full_name || user.user_metadata?.full_name || ''
+      profileEmail.value = customer.email || userEmail
+    } else {
+      profileName.value = user.user_metadata?.full_name || ''
+    }
+  } catch (err) {
+    console.error('Failed to load profile:', err)
+    $q.notify({ type: 'negative', message: 'Failed to load profile data.' })
+  } finally {
+    profileLoading.value = false
+  }
+}
+
+onMounted(loadProfile)
 
 const openFilePicker = () => {
   fileInputRef.value?.click()
@@ -136,7 +225,7 @@ watch(darkMode, (val) => {
 
 .profile-avatar {
   background: #f5f5f7;
-  margin-top: -325px;
+  margin-top: -295px;
 }
 
 .profile-avatar-btn {
@@ -149,6 +238,31 @@ watch(darkMode, (val) => {
   display: flex;
   flex-direction: column;
   gap: 20px;
+}
+
+.profile-info {
+  width: 100%;
+  text-align: center;
+}
+
+.profile-name {
+  font-size: 22px;
+  font-weight: 700;
+  color: #1f2937;
+  line-height: 1.2;
+}
+
+.profile-email {
+  margin-top: 6px;
+  font-size: 14px;
+  color: #6b7280;
+}
+
+.profile-extra {
+  margin-top: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #2e7d32;
 }
 
 .action-btn {
