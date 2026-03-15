@@ -8,14 +8,24 @@
           <img src="/icons/White.png" alt="San3a" style="height: 40px; margin-left: 10px" />
         </q-toolbar-title>
         <q-space />
-        <img src="/icons/drapery.png" alt="Drapery Seamstress" style="height: 36px; object-fit: contain" />
+        <img
+          src="/icons/drapery.png"
+          alt="Drapery Seamstress"
+          style="height: 36px; object-fit: contain"
+        />
       </q-toolbar>
     </q-header>
 
     <q-page-container>
       <q-page class="page-content">
         <div class="request-card">
-          <q-tabs v-model="activeTab" dense class="text-primary q-mb-md" align="justify" narrow-indicator>
+          <q-tabs
+            v-model="activeTab"
+            dense
+            class="text-primary q-mb-md"
+            align="justify"
+            narrow-indicator
+          >
             <q-tab name="post" label="Post Request" icon="edit" />
             <q-tab name="history" label="Request History" icon="history" />
           </q-tabs>
@@ -24,158 +34,188 @@
 
           <!-- POST REQUEST TAB -->
           <div v-if="activeTab === 'post'">
-          <div class="text-h6 q-mb-md">Post a Request</div>
-
-          <q-input
-            v-model="requestText"
-            type="textarea"
-            filled
-            outlined
-            label="Describe your drapery or seamstress issue..."
-            autogrow
-            :input-style="{ minHeight: '150px' }"
-            class="q-mb-md"
-          />
-
-          <div class="date-time-row q-mb-md">
-            <q-input
-              v-model="appointmentDate"
-              filled
-              outlined
-              label="Appointment Date"
-              class="date-input"
-            >
-              <template #prepend>
-                <q-icon name="event" class="cursor-pointer">
-                  <q-popup-proxy cover transition-show="scale" transition-hide="scale">
-                    <q-date v-model="appointmentDate" mask="YYYY-MM-DD">
-                      <div class="row items-center justify-end">
-                        <q-btn v-close-popup label="Close" color="primary" flat />
-                      </div>
-                    </q-date>
-                  </q-popup-proxy>
-                </q-icon>
-              </template>
-            </q-input>
+            <div class="text-h6 q-mb-md">Post a Request</div>
 
             <q-input
-              v-model="appointmentTime"
+              v-model="requestText"
+              type="textarea"
               filled
               outlined
-              label="Appointment Time"
-              class="time-input"
-            >
-              <template #prepend>
-                <q-icon name="access_time" class="cursor-pointer">
-                  <q-popup-proxy cover transition-show="scale" transition-hide="scale">
-                    <q-time v-model="appointmentTime" mask="hh:mm">
-                      <div class="row items-center justify-end">
-                        <q-btn v-close-popup label="Close" color="primary" flat />
-                      </div>
-                    </q-time>
-                  </q-popup-proxy>
-                </q-icon>
-              </template>
-            </q-input>
-
-            <q-select
-              v-model="amPm"
-              :options="['AM', 'PM']"
-              filled
-              outlined
-              label="AM/PM"
-              class="ampm-select"
+              label="Describe your drapery or seamstress issue..."
+              autogrow
+              :input-style="{ minHeight: '150px' }"
+              class="q-mb-md"
             />
-          </div>
 
-          <q-select
-            v-model="district"
-            :options="cairoDistricts"
-            label="District"
-            filled
-            outlined
-            clearable
-            class="q-mb-md"
-          >
-            <template #prepend>
-              <q-icon name="location_city" />
-            </template>
-          </q-select>
-
-          <div class="urgency-row q-mb-md">
-            <q-select
-              v-model="urgency"
-              :options="urgencyOptions"
-              label="Urgency"
-              filled
-              outlined
-              emit-value
-              map-options
-              style="flex: 1"
-            />
-            <q-icon
-              name="warning"
-              :color="urgency === 'urgent' ? 'amber' : 'grey-6'"
-              size="sm"
-              class="q-ml-sm"
-            />
-          </div>
-
-          <div class="payment-row q-mb-md">
-            <div class="text-subtitle2 q-mb-sm">Payment Method</div>
-            <div class="payment-options">
-              <q-btn
-                :outline="paymentMethod !== 'cash'"
-                :color="paymentMethod === 'cash' ? 'primary' : 'grey-7'"
-                class="payment-btn"
-                @click="selectCash"
+            <div class="date-time-row q-mb-md">
+              <q-input
+                v-model="appointmentDate"
+                filled
+                outlined
+                label="Appointment Date"
+                class="date-input"
               >
-                <q-icon
-                  name="payments"
-                  :class="['q-mr-sm', { 'cash-count-anim': cashAnimating }]"
-                />
-                Cash
+                <template #prepend>
+                  <q-icon name="event" class="cursor-pointer">
+                    <q-popup-proxy cover transition-show="scale" transition-hide="scale">
+                      <q-date v-model="appointmentDate" mask="YYYY-MM-DD">
+                        <div class="row items-center justify-end">
+                          <q-btn v-close-popup label="Close" color="primary" flat />
+                        </div>
+                      </q-date>
+                    </q-popup-proxy>
+                  </q-icon>
+                </template>
+              </q-input>
+
+              <q-input
+                v-model="appointmentTime"
+                filled
+                outlined
+                label="Appointment Time"
+                class="time-input"
+              >
+                <template #prepend>
+                  <q-icon name="access_time" class="cursor-pointer">
+                    <q-popup-proxy cover transition-show="scale" transition-hide="scale">
+                      <q-time v-model="appointmentTime" mask="hh:mm">
+                        <div class="row items-center justify-end">
+                          <q-btn v-close-popup label="Close" color="primary" flat />
+                        </div>
+                      </q-time>
+                    </q-popup-proxy>
+                  </q-icon>
+                </template>
+              </q-input>
+
+              <q-select
+                v-model="amPm"
+                :options="['AM', 'PM']"
+                filled
+                outlined
+                label="AM/PM"
+                class="ampm-select"
+              />
+            </div>
+
+            <q-select
+              v-model="district"
+              :options="cairoDistricts"
+              label="District"
+              filled
+              outlined
+              clearable
+              class="q-mb-md"
+            >
+              <template #prepend>
+                <q-icon name="location_city" />
+              </template>
+            </q-select>
+
+            <div class="urgency-row q-mb-md">
+              <q-select
+                v-model="urgency"
+                :options="urgencyOptions"
+                label="Urgency"
+                filled
+                outlined
+                emit-value
+                map-options
+                style="flex: 1"
+              />
+              <q-icon
+                name="warning"
+                :color="urgency === 'urgent' ? 'amber' : 'grey-6'"
+                size="sm"
+                class="q-ml-sm"
+              />
+            </div>
+
+            <div class="payment-row q-mb-md">
+              <div class="text-subtitle2 q-mb-sm">Payment Method</div>
+              <div class="payment-options">
+                <q-btn
+                  :outline="paymentMethod !== 'cash'"
+                  :color="paymentMethod === 'cash' ? 'primary' : 'grey-7'"
+                  class="payment-btn"
+                  @click="selectCash"
+                >
+                  <q-icon
+                    name="payments"
+                    :class="['q-mr-sm', { 'cash-count-anim': cashAnimating }]"
+                  />
+                  Cash
+                </q-btn>
+                <q-btn
+                  :outline="paymentMethod !== 'instapay'"
+                  :color="paymentMethod === 'instapay' ? 'primary' : 'grey-7'"
+                  class="payment-btn"
+                  @click="selectInstapay"
+                >
+                  <q-icon
+                    name="credit_card"
+                    :class="['q-mr-sm', { 'card-flip-anim': cardFlipping }]"
+                  />
+                  Instapay
+                </q-btn>
+              </div>
+            </div>
+
+            <div class="attachments-row q-mb-md">
+              <q-btn
+                flat
+                round
+                icon="add_a_photo"
+                color="primary"
+                size="md"
+                @click="openImagePicker"
+              >
+                <q-tooltip>Attach Photos</q-tooltip>
               </q-btn>
               <q-btn
-                :outline="paymentMethod !== 'instapay'"
-                :color="paymentMethod === 'instapay' ? 'primary' : 'grey-7'"
-                class="payment-btn"
-                @click="selectInstapay"
+                flat
+                round
+                icon="location_on"
+                color="primary"
+                size="md"
+                @click="attachLocation"
               >
-                <q-icon
-                  name="credit_card"
-                  :class="['q-mr-sm', { 'card-flip-anim': cardFlipping }]"
-                />
-                Instapay
+                <q-tooltip>Attach Location</q-tooltip>
+              </q-btn>
+              <q-space />
+              <q-btn round color="primary" icon="send" size="md" @click="submitRequest">
+                <q-tooltip>Submit Request</q-tooltip>
               </q-btn>
             </div>
-          </div>
 
-          <div class="attachments-row q-mb-md">
-            <q-btn flat round icon="add_a_photo" color="primary" size="md" @click="openImagePicker">
-              <q-tooltip>Attach Photos</q-tooltip>
-            </q-btn>
-            <q-btn flat round icon="location_on" color="primary" size="md" @click="attachLocation">
-              <q-tooltip>Attach Location</q-tooltip>
-            </q-btn>
-            <q-space />
-            <q-btn round color="primary" icon="send" size="md" @click="submitRequest">
-              <q-tooltip>Submit Request</q-tooltip>
-            </q-btn>
-          </div>
+            <input
+              ref="imageInputRef"
+              type="file"
+              accept="image/*"
+              multiple
+              class="hidden-input"
+              @change="onImagesSelected"
+            />
 
-          <input
-            ref="imageInputRef"
-            type="file"
-            accept="image/*"
-            multiple
-            class="hidden-input"
-            @change="onImagesSelected"
-          />
+            <div v-if="selectedImages.length" class="image-preview q-mb-md">
+              <div v-for="(img, i) in selectedImages" :key="i" class="preview-item">
+                <img :src="img.url" alt="Attached image" />
+                <q-btn
+                  flat
+                  round
+                  dense
+                  icon="close"
+                  size="xs"
+                  color="negative"
+                  class="remove-btn"
+                  @click="removeImage(i)"
+                />
+              </div>
+            </div>
 
-          <div v-if="selectedImages.length" class="image-preview q-mb-md">
-            <div v-for="(img, i) in selectedImages" :key="i" class="preview-item">
-              <img :src="img.url" alt="Attached image" />
+            <div v-if="location" class="location-info q-mb-sm">
+              <q-icon name="location_on" color="positive" size="sm" />
+              <span class="q-ml-xs">{{ location }}</span>
               <q-btn
                 flat
                 round
@@ -183,32 +223,21 @@
                 icon="close"
                 size="xs"
                 color="negative"
-                class="remove-btn"
-                @click="removeImage(i)"
+                @click="location = null"
               />
             </div>
-          </div>
-
-          <div v-if="location" class="location-info q-mb-sm">
-            <q-icon name="location_on" color="positive" size="sm" />
-            <span class="q-ml-xs">{{ location }}</span>
-            <q-btn
-              flat
-              round
-              dense
-              icon="close"
-              size="xs"
-              color="negative"
-              @click="location = null"
-            />
-          </div>
           </div>
 
           <!-- REQUEST HISTORY TAB -->
           <div v-if="activeTab === 'history'">
             <div class="row items-center justify-between q-mb-md">
               <div class="text-h6">Request History</div>
-              <q-badge v-if="!historyLoading && requestHistory.length" color="primary" :label="`${requestHistory.length} request${requestHistory.length > 1 ? 's' : ''}`" class="text-body2 q-pa-sm" />
+              <q-badge
+                v-if="!historyLoading && requestHistory.length"
+                color="primary"
+                :label="`${requestHistory.length} request${requestHistory.length > 1 ? 's' : ''}`"
+                class="text-body2 q-pa-sm"
+              />
             </div>
 
             <div v-if="historyLoading" class="text-center q-pa-xl">
@@ -220,26 +249,49 @@
               <q-icon name="error" size="64px" color="negative" />
               <div class="text-h6 text-negative q-mt-md">Failed to load requests</div>
               <div class="text-body2 text-grey-7 q-mt-sm">{{ historyError }}</div>
-              <q-btn flat color="primary" label="Retry" icon="refresh" class="q-mt-sm" @click="fetchHistory" />
+              <q-btn
+                flat
+                color="primary"
+                label="Retry"
+                icon="refresh"
+                class="q-mt-sm"
+                @click="fetchHistory"
+              />
             </div>
 
             <div v-else-if="requestHistory.length === 0" class="text-center q-pa-xl">
               <q-icon name="inbox" size="64px" color="grey-5" />
               <div class="text-h6 text-grey-6 q-mt-md">You haven't posted any requests yet.</div>
-              <q-btn flat color="primary" label="Post your first request" icon="edit" class="q-mt-sm" @click="activeTab = 'post'" />
+              <q-btn
+                flat
+                color="primary"
+                label="Post your first request"
+                icon="edit"
+                class="q-mt-sm"
+                @click="activeTab = 'post'"
+              />
             </div>
 
             <div v-else class="row q-col-gutter-md">
-              <div v-for="req in requestHistory" :key="req.request_id" class="col-12 col-sm-6 col-md-6">
+              <div
+                v-for="req in requestHistory"
+                :key="req.request_id"
+                class="col-12 col-sm-6 col-md-6"
+              >
                 <q-card bordered flat class="history-card">
                   <q-card-section>
                     <div class="row items-center justify-between q-mb-sm">
                       <div class="text-subtitle1 text-weight-bold ellipsis" style="max-width: 70%">
                         Request #{{ req.request_id }}
                       </div>
-                      <q-badge :color="statusColor(req.request_status)" :label="req.request_status || 'pending'" />
+                      <q-badge
+                        :color="statusColor(req.request_status)"
+                        :label="req.request_status || 'pending'"
+                      />
                     </div>
-                    <div class="text-body2 q-mb-md" style="white-space: pre-line">{{ req.description_of_issue || 'No description' }}</div>
+                    <div class="text-body2 q-mb-md" style="white-space: pre-line">
+                      {{ req.description_of_issue || 'No description' }}
+                    </div>
 
                     <q-separator class="q-mb-sm" />
 
@@ -265,13 +317,34 @@
 
                   <q-separator v-if="req.urgency || req.customer_price || req.fixer_price" />
 
-                  <q-card-section v-if="req.urgency || req.customer_price || req.fixer_price" class="q-py-sm">
+                  <q-card-section
+                    v-if="req.urgency || req.customer_price || req.fixer_price"
+                    class="q-py-sm"
+                  >
                     <div class="row items-center q-gutter-sm">
-                      <q-badge v-if="req.urgency" :color="req.urgency === 'urgent' ? 'red' : 'blue'" :label="req.urgency" />
-                      <q-chip v-if="req.customer_price" dense size="sm" color="green-2" text-color="green-9" icon="person">
+                      <q-badge
+                        v-if="req.urgency"
+                        :color="req.urgency === 'urgent' ? 'red' : 'blue'"
+                        :label="req.urgency"
+                      />
+                      <q-chip
+                        v-if="req.customer_price"
+                        dense
+                        size="sm"
+                        color="green-2"
+                        text-color="green-9"
+                        icon="person"
+                      >
                         {{ req.customer_price }} EGP
                       </q-chip>
-                      <q-chip v-if="req.fixer_price" dense size="sm" color="orange-2" text-color="orange-9" icon="build">
+                      <q-chip
+                        v-if="req.fixer_price"
+                        dense
+                        size="sm"
+                        color="orange-2"
+                        text-color="orange-9"
+                        icon="build"
+                      >
                         {{ req.fixer_price }} EGP
                       </q-chip>
                     </div>
@@ -302,7 +375,9 @@ const requestHistory = ref([])
 const historyLoading = ref(false)
 
 onMounted(async () => {
-  const { data: { user } } = await supabase.auth.getUser()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
   if (user) {
     const { data: customer } = await supabase
       .from('users')
@@ -447,7 +522,13 @@ const formatDate = (dateStr) => {
   // Supabase timestamps are UTC — append Z so the browser converts to local time
   const utcStr = dateStr.endsWith('Z') || dateStr.includes('+') ? dateStr : dateStr + 'Z'
   const d = new Date(utcStr)
-  return d.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
+  return d.toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  })
 }
 
 const statusColor = (status) => {
@@ -503,8 +584,16 @@ const attachLocation = () => {
 }
 
 const submitRequest = async () => {
-  if (!requestText.value.trim()) {
-    $q.notify({ type: 'warning', message: 'Please describe your issue' })
+  const isIncomplete =
+    !requestText.value.trim() ||
+    !appointmentDate.value ||
+    !appointmentTime.value ||
+    !district.value ||
+    !urgency.value ||
+    !paymentMethod.value
+
+  if (isIncomplete) {
+    $q.notify({ type: 'warning', message: 'Fill the rest of the form' })
     return
   }
   if (!currentUserId.value) {

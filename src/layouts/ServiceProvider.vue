@@ -582,6 +582,8 @@ const submitOffer = async () => {
     .from('request')
     .update({
       fixer_price: offerPrice.value,
+      request_status: 'pending',
+      technician_id: technicianId.value,
     })
     .eq('request_id', offerTarget.value.request_id)
 

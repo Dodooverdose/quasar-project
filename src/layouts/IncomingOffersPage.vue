@@ -41,14 +41,30 @@
 
         <div v-else class="offers-container">
           <div class="page-title">Incoming Offers</div>
-          <div class="q-mb-md">
+          <div class="row items-center justify-between q-col-gutter-sm q-mb-md">
             <q-badge color="primary" class="q-pa-sm text-body2">
-              {{ incomingOffers.length }} {{ incomingOffers.length === 1 ? 'offer' : 'offers' }}
+              {{ filteredOffers.length }} {{ filteredOffers.length === 1 ? 'offer' : 'offers' }}
             </q-badge>
+
+            <q-select
+              v-model="statusFilter"
+              :options="statusFilterOptions"
+              emit-value
+              map-options
+              dense
+              outlined
+              class="status-filter"
+              label="Status"
+            />
+          </div>
+
+          <div v-if="filteredOffers.length === 0" class="state-wrap state-wrap-inline">
+            <q-icon name="filter_alt_off" size="56px" color="grey-4" />
+            <div class="state-subtitle">No offers for selected status.</div>
           </div>
 
           <q-card
-            v-for="req in incomingOffers"
+            v-for="req in filteredOffers"
             :key="req.request_id"
             flat
             bordered
@@ -81,6 +97,28 @@
                 >
                   Your budget: {{ req.customer_price }} EGP
                 </q-chip>
+              </div>
+
+              <div v-if="req.fixerInfo" class="fixer-info q-mb-sm">
+                <div class="fixer-title">Fixer Details</div>
+                <div class="fixer-detail-row">
+                  <q-icon name="person" size="14px" color="grey-7" />
+                  <span>{{ req.fixerInfo.full_name || 'Unknown fixer' }}</span>
+                </div>
+                <div v-if="req.fixerInfo.phone_number" class="fixer-detail-row">
+                  <q-icon name="phone" size="14px" color="grey-7" />
+                  <span>{{ req.fixerInfo.phone_number }}</span>
+                </div>
+                <div
+                  v-if="
+                    req.fixerInfo.years_of_experience !== null &&
+                    req.fixerInfo.years_of_experience !== undefined
+                  "
+                  class="fixer-detail-row"
+                >
+                  <q-icon name="workspace_premium" size="14px" color="grey-7" />
+                  <span>{{ req.fixerInfo.years_of_experience }} years of experience</span>
+                </div>
               </div>
 
               <div class="meta-row">
@@ -116,7 +154,7 @@
         <q-tab
           name="offers"
           icon="handshake"
-          label="Offers"
+          label="Requests"
           @click="$router.push('/incoming-offers')"
         />
         <q-tab name="orders" icon="receipt_long" label="Orders" @click="$router.push('/orders')" />
@@ -127,13 +165,30 @@
 </template>
 
 <script setup>
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { supabase } from 'src/boot/supabase'
 
 const activeTab = ref('offers')
 const loading = ref(true)
 const error = ref(null)
 const incomingOffers = ref([])
+const statusFilter = ref('all')
+const statusFilterOptions = [
+  { label: 'All', value: 'all' },
+  { label: 'Pending', value: 'pending' },
+  { label: 'Accepted', value: 'accepted' },
+  { label: 'Completed', value: 'completed' },
+  { label: 'Cancelled', value: 'cancelled' },
+]
+
+const filteredOffers = computed(() => {
+  if (statusFilter.value === 'all') {
+    return incomingOffers.value
+  }
+  return incomingOffers.value.filter(
+    (r) => (r.request_status || 'pending').toLowerCase() === statusFilter.value,
+  )
+})
 
 const statusColor = (status) => {
   const map = { pending: 'orange', accepted: 'blue', completed: 'green', cancelled: 'red' }
@@ -185,14 +240,32 @@ const fetchIncomingOffers = async () => {
       .select('*')
       .eq('user_id', customer.user_id)
       .not('fixer_price', 'is', null)
-      .eq('request_status', 'pending')
       .order('request_date', { ascending: false })
 
     if (fetchErr) {
       error.value = fetchErr.message
       incomingOffers.value = []
     } else {
-      incomingOffers.value = data || []
+      const offers = data || []
+      const technicianIds = [...new Set(offers.map((r) => r.technician_id).filter(Boolean))]
+
+      let technicianMap = {}
+      if (technicianIds.length) {
+        const { data: techRows } = await supabase
+          .from('technician')
+          .select('technician_id, full_name, phone_number, years_of_experience')
+          .in('technician_id', technicianIds)
+
+        technicianMap = (techRows || []).reduce((acc, t) => {
+          acc[t.technician_id] = t
+          return acc
+        }, {})
+      }
+
+      incomingOffers.value = offers.map((r) => ({
+        ...r,
+        fixerInfo: r.technician_id ? technicianMap[r.technician_id] || null : null,
+      }))
     }
   } catch (err) {
     error.value = 'An unexpected error occurred.'
@@ -240,6 +313,15 @@ onMounted(fetchIncomingOffers)
   padding: 20px 16px;
 }
 
+.status-filter {
+  width: 150px;
+}
+
+.state-wrap-inline {
+  min-height: auto;
+  padding: 20px 0 24px;
+}
+
 .page-title {
   font-size: 24px;
   font-weight: 800;
@@ -270,6 +352,28 @@ onMounted(fetchIncomingOffers)
   gap: 4px;
   font-size: 12px;
   color: #78909c;
+}
+
+.fixer-info {
+  border: 1px solid #e8eeeb;
+  border-radius: 10px;
+  padding: 10px 12px;
+  background: #fafdfb;
+}
+
+.fixer-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: #2e7d32;
+  margin-bottom: 6px;
+}
+
+.fixer-detail-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: #455a64;
 }
 
 .bottom-nav {
