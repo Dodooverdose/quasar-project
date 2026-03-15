@@ -104,24 +104,15 @@
         narrow-indicator
         dense
       >
+        <q-tab name="home" icon="home" label="Home" @click="goToPage('/home')" />
         <q-tab
-          name="home"
-          icon="home"
-          label="Home"
-          @click="goToPage('/home')"
+          name="offers"
+          icon="handshake"
+          label="Requests"
+          @click="goToPage('/incoming-offers')"
         />
-        <q-tab
-          name="orders"
-          icon="receipt_long"
-          label="Orders"
-          @click="goToPage('/orders')"
-        />
-        <q-tab
-          name="profile"
-          icon="person"
-          label="Profile"
-          @click="goToPage('/profile')"
-        />
+        <q-tab name="orders" icon="receipt_long" label="Orders" @click="goToPage('/orders')" />
+        <q-tab name="profile" icon="person" label="Profile" @click="goToPage('/profile')" />
       </q-tabs>
     </q-footer>
   </q-layout>
@@ -205,7 +196,9 @@ const items = ref([
   border-radius: 16px !important;
   background: #f7f9f8;
   border: 1px solid #e8eeeb !important;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
 }
 
 .icon-card:hover {

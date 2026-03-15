@@ -7,13 +7,7 @@
           <img src="/icons/White.png" alt="San3a" style="height: 40px; margin-left: 10px" />
         </q-toolbar-title>
         <q-space />
-        <q-btn
-          flat
-          round
-          dense
-          icon="notifications"
-          aria-label="Notifications"
-        />
+        <q-btn flat round dense icon="notifications" aria-label="Notifications" />
       </q-toolbar>
     </q-header>
 
@@ -88,7 +82,11 @@
                   <q-badge
                     :color="groupedOrders[cat.key]?.length ? 'white' : 'grey-4'"
                     :text-color="groupedOrders[cat.key]?.length ? 'green-9' : 'grey-7'"
-                    :label="(groupedOrders[cat.key]?.length || 0) + ' ' + ((groupedOrders[cat.key]?.length || 0) === 1 ? 'order' : 'orders')"
+                    :label="
+                      (groupedOrders[cat.key]?.length || 0) +
+                      ' ' +
+                      ((groupedOrders[cat.key]?.length || 0) === 1 ? 'order' : 'orders')
+                    "
                     class="q-pa-xs text-caption"
                     rounded
                   />
@@ -164,24 +162,15 @@
         narrow-indicator
         dense
       >
+        <q-tab name="home" icon="home" label="Home" @click="$router.push('/home')" />
         <q-tab
-          name="home"
-          icon="home"
-          label="Home"
-          @click="$router.push('/home')"
+          name="offers"
+          icon="handshake"
+          label="Offers"
+          @click="$router.push('/incoming-offers')"
         />
-        <q-tab
-          name="orders"
-          icon="receipt_long"
-          label="Orders"
-          @click="$router.push('/orders')"
-        />
-        <q-tab
-          name="profile"
-          icon="person"
-          label="Profile"
-          @click="$router.push('/profile')"
-        />
+        <q-tab name="orders" icon="receipt_long" label="Orders" @click="$router.push('/orders')" />
+        <q-tab name="profile" icon="person" label="Profile" @click="$router.push('/profile')" />
       </q-tabs>
     </q-footer>
   </q-layout>
