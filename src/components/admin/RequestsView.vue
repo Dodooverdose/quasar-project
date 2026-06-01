@@ -103,8 +103,11 @@
               <strong>{{ $t('admin.finalPrice') }}:</strong> {{ selectedRequest.final_price }}
             </div>
             <div>
+              <strong>Technician:</strong> {{ selectedRequest._technician_name || 'Unassigned' }}
+            </div>
+            <div>
               <strong>{{ $t('admin.colCreated') }}:</strong>
-              {{ formatDate(selectedRequest.created_at) }}
+              {{ formatDate(selectedRequest._created_at) }}
             </div>
           </div>
         </q-card-section>
@@ -193,6 +196,8 @@ const normalizeRequest = (request) => ({
     'Unspecified',
   _description: request.description ?? request.description_of_issue ?? '',
   _status: request.request_status ?? request.status ?? 'pending',
+  _created_at: request.created_at ?? request.request_date ?? null,
+  _technician_name: request.technician?.full_name ?? request.technician_name ?? null,
 })
 
 const filteredRequests = computed(() => {
@@ -219,7 +224,7 @@ const loadRequests = async () => {
   try {
     const { data, error } = await supabase
       .from('request')
-      .select('*, users:user_id(full_name, email)')
+      .select('*, users:user_id(full_name, email), technician:technician_id(full_name)')
 
     if (error) throw error
     requests.value = (data || []).map(normalizeRequest)

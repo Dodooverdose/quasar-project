@@ -295,6 +295,7 @@ const usersCount = ref(0)
 const techniciansCount = ref(0)
 const activeRequestsCount = ref(0)
 const complaintsCount = ref(0)
+const unresolvedComplaintsCount = ref(0)
 const pendingVerifications = ref(0)
 const approvedProfiles = ref(0)
 const rejectedProfiles = ref(0)
@@ -418,6 +419,10 @@ const loadAnalytics = async () => {
       statusCounter[key] = (statusCounter[key] || 0) + 1
     }
     requestStatusMap.value = statusCounter
+
+    unresolvedComplaintsCount.value = (complaintRows.data || []).filter(
+      (row) => String(row.status ?? '').toLowerCase() === 'unsolved',
+    ).length
 
     const categoryCounter = {}
     for (const row of requestRows.data || []) {
@@ -586,7 +591,7 @@ const actionItems = computed(() => {
 
   if (complaintsCount.value > 0) {
     items.push({
-      label: `${formatNumber(complaintsCount.value)} complaints logged`,
+      label: `${formatNumber(unresolvedComplaintsCount.value)} unresolved complaints`,
       sub: 'Check unresolved complaints',
       sectionKey: 'complaints',
       icon: 'flag',
