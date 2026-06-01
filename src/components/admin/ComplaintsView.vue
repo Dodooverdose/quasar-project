@@ -399,12 +399,8 @@ const unresolveComplaint = async (id) => {
 
 const deleteComplaint = async (id) => {
   try {
-    await $q.dialog({
-      title: t('common.confirm'),
-      message: t('admin.deleteComplaintConfirm'),
-      cancel: true,
-      persistent: true,
-    })
+    const confirmed = window.confirm(t('admin.deleteComplaintConfirm'))
+    if (!confirmed) return
 
     const { error } = await supabase.from('complaint').delete().eq('complaint_id', id)
 

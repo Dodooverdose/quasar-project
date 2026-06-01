@@ -242,12 +242,8 @@ const viewRequest = (request) => {
 
 const deleteRequest = async (request) => {
   try {
-    await $q.dialog({
-      title: t('common.confirm'),
-      message: t('admin.deleteRequestConfirm'),
-      cancel: true,
-      persistent: true,
-    })
+    const confirmed = window.confirm(t('admin.deleteRequestConfirm'))
+    if (!confirmed) return
 
     const { error } = await supabase
       .from('request')

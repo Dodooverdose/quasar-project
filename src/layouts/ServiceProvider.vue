@@ -1252,15 +1252,18 @@ const paymentMethodOptions = computed(() => [
 ])
 
 const specialtyMap = {
-  plumber: { label: 'Plumber', icon: '/icons/plumbing.png', color: 'blue' },
-  electrician: { label: 'Electrician', icon: '/icons/electrical.png', color: 'amber-8' },
-  carpenter: { label: 'Carpenter', icon: '/icons/carpentry.png', color: 'brown' },
-  painter: { label: 'Painter', icon: '/icons/painters.png', color: 'purple' },
-  kitchen_fitter: { label: 'Kitchen Fitter', icon: '/icons/kitchen.png', color: 'green' },
-  drapery_seamstress: { label: 'Drapery Seamstress', icon: '/icons/drapery.png', color: 'pink' },
+  plumber: { icon: '/icons/plumbing.png', color: 'blue' },
+  electrician: { icon: '/icons/electrical.png', color: 'amber-8' },
+  carpenter: { icon: '/icons/carpentry.png', color: 'brown' },
+  painter: { icon: '/icons/painters.png', color: 'purple' },
+  kitchen_fitter: { icon: '/icons/kitchen.png', color: 'green' },
+  drapery_seamstress: { icon: '/icons/drapery.png', color: 'pink' },
 }
 
-const specialtyLabel = ref('Service Provider')
+const specialtyLabel = computed(() => {
+  if (!specialty.value) return 'Service Provider'
+  return t(`signUpPage.${specialty.value}`)
+})
 const specialtyIcon = ref(null)
 const specialtyColor = ref('primary')
 
@@ -1680,7 +1683,6 @@ onMounted(async () => {
     }
     const info = specialtyMap[specialty.value]
     if (info) {
-      specialtyLabel.value = info.label
       specialtyIcon.value = info.icon
       specialtyColor.value = info.color
     }

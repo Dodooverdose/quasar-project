@@ -409,24 +409,16 @@ const viewTechnician = (technician) => {
 
 const deleteTechnician = async (technician) => {
   try {
-    await $q.dialog({
-      title: t('common.confirm'),
-      message: t('admin.deleteTechConfirm'),
-      cancel: true,
-      persistent: true,
+    const confirmed = window.confirm(t('admin.deleteTechConfirm'))
+    if (!confirmed) return
+
+    const technicianId = technician._id
+
+    const { error } = await supabase.rpc('admin_delete_technician', {
+      p_technician_id: technicianId,
     })
 
-    const { error } = await supabase
-      .from('technician')
-      .delete()
-      .eq(technician._keyColumn || 'id', technician._id)
-
     if (error) throw error
-
-    await supabase
-      .from('technician_verification_state')
-      .delete()
-      .eq('technician_id', technician._id)
 
     $q.notify({
       type: 'positive',

@@ -340,6 +340,29 @@ const formatDate = (value) => {
   return date.toLocaleString()
 }
 
+const submissionStillExists = async (row) => {
+  if (!row?.auth_id || !row?.account_type) return false
+
+  const table = row.account_type === 'technician' ? 'technician' : 'users'
+  const idColumn = row.account_type === 'technician' ? 'auth_id' : 'auth_id'
+
+  const checks = [
+    supabase.from(table).select('auth_id').eq(idColumn, row.auth_id).maybeSingle(),
+  ]
+
+  if (row.email) {
+    checks.push(supabase.from(table).select('auth_id').ilike('email', row.email).maybeSingle())
+  }
+
+  for (const query of checks) {
+    const { data, error } = await query
+    if (error) continue
+    if (data) return true
+  }
+
+  return false
+}
+
 const fetchPhoneNumberFromProfileTable = async (table, row) => {
   if (!table || !row) return ''
 
@@ -382,7 +405,12 @@ const loadRows = async () => {
 
     if (error) throw error
 
-    rows.value = data || []
+    const resolvedRows = await Promise.all((data || []).map(async (row) => {
+      const exists = await submissionStillExists(row)
+      return exists ? row : null
+    }))
+
+    rows.value = resolvedRows.filter(Boolean)
   } catch (error) {
     console.error('Error loading verifications:', error)
     $q.notify({ type: 'negative', message: t('admin.failedLoadVerifications') })

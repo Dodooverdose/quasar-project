@@ -268,6 +268,13 @@ const deleteCustomer = async (customer) => {
     const confirmed = window.confirm('Are you sure you want to delete this user?')
     if (!confirmed) return
 
+    if (customer?.auth_id) {
+      await supabase
+        .from('profile_verification_submissions')
+        .delete()
+        .eq('auth_id', customer.auth_id)
+    }
+
     const { error } = await supabase
       .from('users')
       .delete()
