@@ -1260,9 +1260,19 @@ const specialtyMap = {
   drapery_seamstress: { icon: '/icons/drapery.png', color: 'pink' },
 }
 
+const specialtyTranslationKey = {
+  plumber: 'plumber',
+  electrician: 'electrician',
+  carpenter: 'carpenter',
+  painter: 'painter',
+  kitchen_fitter: 'kitchenFitter',
+  drapery_seamstress: 'draperySeamstress',
+}
+
 const specialtyLabel = computed(() => {
   if (!specialty.value) return 'Service Provider'
-  return t(`signUpPage.${specialty.value}`)
+  const key = specialtyTranslationKey[specialty.value] ?? specialty.value
+  return t(`signUpPage.${key}`)
 })
 const specialtyIcon = ref(null)
 const specialtyColor = ref('primary')
