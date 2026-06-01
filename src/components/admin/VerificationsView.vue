@@ -145,7 +145,7 @@
             </div>
             <div>
               <strong>{{ $t('common.phone') }}:</strong>
-              {{ selectedRow.profile_details?.phoneNumber || '-' }}
+              {{ resolvedPhoneNumber || selectedRow.profile_details?.phoneNumber || '-' }}
             </div>
             <div v-if="selectedRow.account_type === 'technician'">
               <strong>{{ $t('admin.colSpecialty') }}:</strong>
@@ -272,6 +272,7 @@ const showRejectDialog = ref(false)
 const rejectReason = ref('')
 const rejectTargetRow = ref(null)
 const rejectSaving = ref(false)
+const resolvedPhoneNumber = ref('')
 
 const accountTypeOptions = [
   { label: t('admin.allAccounts'), value: 'all' },
@@ -339,6 +340,38 @@ const formatDate = (value) => {
   return date.toLocaleString()
 }
 
+const fetchPhoneNumberFromProfileTable = async (table, row) => {
+  if (!table || !row) return ''
+
+  const queries = []
+
+  if (row.auth_id) {
+    queries.push(supabase.from(table).select('phone_number').eq('auth_id', row.auth_id).maybeSingle())
+  }
+
+  if (row.email) {
+    queries.push(supabase.from(table).select('phone_number').ilike('email', row.email).maybeSingle())
+  }
+
+  for (const query of queries) {
+    const { data, error } = await query
+    if (error) continue
+    if (data?.phone_number) return data.phone_number
+  }
+
+  return ''
+}
+
+const resolveProfilePhoneNumber = async (row) => {
+  const preferredTable = row.account_type === 'technician' ? 'technician' : 'users'
+  const fallbackTable = preferredTable === 'technician' ? 'users' : 'technician'
+
+  const preferredPhone = await fetchPhoneNumberFromProfileTable(preferredTable, row)
+  if (preferredPhone) return preferredPhone
+
+  return fetchPhoneNumberFromProfileTable(fallbackTable, row)
+}
+
 const loadRows = async () => {
   loading.value = true
   try {
@@ -361,6 +394,15 @@ const loadRows = async () => {
 const openDetails = (row) => {
   selectedRow.value = row
   showDialog.value = true
+  resolvedPhoneNumber.value = ''
+
+  resolveProfilePhoneNumber(row)
+    .then((phoneNumber) => {
+      resolvedPhoneNumber.value = phoneNumber || ''
+    })
+    .catch((error) => {
+      console.error('Error fetching verification phone number:', error)
+    })
 }
 
 const updateReviewStatus = async (row, status, reviewerNotes = null) => {

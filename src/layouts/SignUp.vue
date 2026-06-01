@@ -422,6 +422,12 @@ const loading = ref(false)
 const showPassword = ref(false)
 const showConfirmPassword = ref(false)
 
+const normalizeEgyptPhoneForStorage = (phoneNumber) => {
+  const digits = String(phoneNumber ?? '').replace(/\s/g, '')
+  if (!digits) return ''
+  return digits.startsWith('0') ? digits : `0${digits}`
+}
+
 // Sync roleTab to form.role
 watch(roleTab, (val) => {
   form.value.role = val
@@ -511,11 +517,12 @@ const onSubmit = async () => {
     }
 
     const table = form.value.role === 'customer' ? 'users' : 'technician'
+    const phoneNumberForStorage = normalizeEgyptPhoneForStorage(form.value.phoneNumber)
 
     const { error: insertError } = await supabase.from(table).insert({
       full_name: form.value.fullName,
       email: form.value.email,
-      phone_number: form.value.phoneNumber,
+      phone_number: phoneNumberForStorage,
       ...(form.value.role === 'fixer' && {
         specialty: form.value.specialty,
         years_of_experience: Number(form.value.yearsOfExperience),
